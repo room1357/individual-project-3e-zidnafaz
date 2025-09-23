@@ -77,7 +77,10 @@ class HomeScreen extends StatelessWidget {
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                // Handle logout
+                Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
               },
             ),
           ],

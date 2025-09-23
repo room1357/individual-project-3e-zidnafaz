@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flutter Emulator",
+            "name": "Flutter Android Emulator",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "deviceId": "Medium_Phone_API_36.0"
+            "toolArgs": ["-d", "android"]
         },
         {
             "name": "Flutter: Attach to Device",

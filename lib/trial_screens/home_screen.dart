@@ -119,27 +119,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Handle add transaction
-        },
+        onPressed: () {},
         backgroundColor: primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        elevation: 8,
-        child: Container(
-          height: 60,
+      bottomNavigationBar: SizedBox(
+        height: 60, // Enforce tinggi 40 dari parent
+        child: BottomAppBar(
+          elevation: 8,
+          color: Colors.white, // Warna background navbar
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home, 'Home', 0),
-              _buildNavItem(Icons.analytics, 'Analisis', 1),
-              const SizedBox(width: 40), // Space for FAB
-              _buildNavItem(Icons.account_balance_wallet, 'Wallet', 2),
-              _buildNavItem(Icons.person, 'Profile', 3),
+              _buildNavItem(Icons.home_rounded, 0),
+              _buildNavItem(Icons.bar_chart_rounded, 1),
+              const SizedBox(width: 64), // space for FAB
+              _buildNavItem(Icons.account_balance_wallet_rounded, 2),
+              _buildNavItem(Icons.person_rounded, 3),
             ],
           ),
         ),
@@ -401,32 +400,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Container(
+          height: 40,
+          alignment: Alignment.center, // Center icon di tengah
+          child: Icon(
             icon,
             color: isSelected ? primaryColor : Colors.grey,
-            size: 24,
+            size: 28, // Kecilkan icon sedikit
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? primaryColor : Colors.grey,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

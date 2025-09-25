@@ -25,7 +25,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Welcome to CashPay',
+                'Welcome to Moneta',
                 style: TextStyle(
                   color: primaryColor,
                   fontSize: 30,

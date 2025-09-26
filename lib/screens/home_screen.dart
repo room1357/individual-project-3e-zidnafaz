@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pemrograman_mobile/screens/advance_expense_list_screen.dart';
+import 'package:pemrograman_mobile/screens/expense_list_screen.dart';
+import 'package:pemrograman_mobile/screens/looping_screen.dart';
 import 'package:pemrograman_mobile/utils/date_utils.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -74,24 +77,64 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 20,
         title: const Text(
           'Moneta',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         backgroundColor: Colors.white,
         foregroundColor: primaryColor,
         elevation: 0,
         centerTitle: false,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IconButton(
-              onPressed: () {
-                // Handle search
-              },
-              icon: const Icon(Icons.search),
-            ),
+          IconButton(
+            onPressed: () {
+              // Handle search
+            },
+            icon: const Icon(Icons.search),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'expense_list':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ExpenseListScreen(),
+                    ),
+                  );
+                  break;
+                case 'advanced_expense_list':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdvancedExpenseListScreen(),
+                    ),
+                  );
+                  break;
+                case 'looping_examples':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoopingScreen(),
+                    ),
+                  );
+                  break;
+              }
+            },
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'expense_list',
+                    child: Text('Expense List'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'advanced_expense_list',
+                    child: Text('Advanced Expense List'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'looping_examples',
+                    child: Text('Looping Examples'),
+                  ),
+                ],
+            icon: const Icon(Icons.more_vert),
           ),
         ],
       ),
@@ -304,9 +347,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildActivitySection() {
     // Create a list of pairs (transaction, DateTime)
-  final txWithDate = transactions
-    .map((t) => {'data': t, 'dt': parseTransactionDateTime(t)})
-    .toList();
+    final txWithDate =
+        transactions
+            .map((t) => {'data': t, 'dt': parseTransactionDateTime(t)})
+            .toList();
 
     // Sort descending by time
     txWithDate.sort(

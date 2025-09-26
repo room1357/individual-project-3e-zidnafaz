@@ -73,8 +73,8 @@ DateTime parseTransactionDateTime(Map<String, dynamic> t) {
 String sectionTitleForDate(DateTime date) {
   final today = DateTime.now();
   final yesterday = today.subtract(const Duration(days: 1));
-  if (isSameDate(date, today)) return 'Hari ini';
-  if (isSameDate(date, yesterday)) return 'Kemarin';
+  if (isSameDate(date, today)) return 'Today';
+  if (isSameDate(date, yesterday)) return 'Yesterday';
   if (date.year == today.year) {
     return '${date.day} ${bulanId[date.month - 1]}';
   }

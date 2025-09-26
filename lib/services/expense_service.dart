@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/expense_model.dart';
 
 class ExpenseManager {
@@ -8,7 +7,8 @@ class ExpenseManager {
   static Map<String, double> getTotalByCategory(List<Expense> expenses) {
     Map<String, double> result = {};
     for (var expense in expenses) {
-      result[expense.category] = (result[expense.category] ?? 0) + expense.amount;
+      final key = expense.category.name;
+      result[key] = (result[key] ?? 0) + expense.amount;
     }
     return result;
   }
@@ -32,7 +32,7 @@ class ExpenseManager {
     return expenses.where((expense) =>
       expense.title.toLowerCase().contains(lowerKeyword) ||
       expense.description.toLowerCase().contains(lowerKeyword) ||
-      expense.category.toLowerCase().contains(lowerKeyword)
+      expense.category.name.toLowerCase().contains(lowerKeyword)
     ).toList();
   }
 

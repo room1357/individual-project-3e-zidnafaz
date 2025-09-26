@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/expense_model.dart';
+import '../data/category_expenses_data.dart';
 
 class LoopingScreen extends StatelessWidget {
   const LoopingScreen({super.key});
@@ -8,9 +9,30 @@ class LoopingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Initialize expenses here for demonstration
     LoopingExamples.expenses = [
-      Expense(id: '1', title: 'Belanja Bulanan', amount: 150000, category: 'Makanan', date: DateTime(2024, 9, 15), description: 'Belanja kebutuhan bulanan di supermarket'),
-      Expense(id: '2', title: 'Bensin Motor', amount: 50000, category: 'Transportasi', date: DateTime(2024, 9, 14), description: 'Isi bensin motor untuk transportasi'),
-      Expense(id: '3', title: 'Kopi di Cafe', amount: 25000, category: 'Makanan', date: DateTime(2024, 9, 14), description: 'Ngopi pagi dengan teman'),
+      Expense(
+        id: '1',
+        title: 'Belanja Bulanan',
+        amount: 150000,
+  category: initialExpenseCategories.firstWhere((c) => c.name == 'Belanja'),
+        date: DateTime(2024, 9, 15),
+        description: 'Belanja kebutuhan bulanan di supermarket',
+      ),
+      Expense(
+        id: '2',
+        title: 'Bensin Motor',
+        amount: 50000,
+  category: initialExpenseCategories.firstWhere((c) => c.name == 'Transportasi'),
+        date: DateTime(2024, 9, 14),
+        description: 'Isi bensin motor untuk transportasi',
+      ),
+      Expense(
+        id: '3',
+        title: 'Kopi di Cafe',
+        amount: 25000,
+  category: initialExpenseCategories.firstWhere((c) => c.name == 'Makanan'),
+        date: DateTime(2024, 9, 14),
+        description: 'Ngopi pagi dengan teman',
+      ),
     ];
 
     return Scaffold(
@@ -165,7 +187,7 @@ class LoopingExamples {
   static List<Expense> filterByCategoryManual(List<Expense> expenses, String category) {
     List<Expense> result = [];
     for (Expense expense in expenses) {
-      if (expense.category.toLowerCase() == category.toLowerCase()) {
+      if (expense.category.name.toLowerCase() == category.toLowerCase()) {
         result.add(expense);
       }
     }
@@ -174,8 +196,8 @@ class LoopingExamples {
 
   // Cara 2: where method (lebih efisien)
   static List<Expense> filterByCategoryWhere(List<Expense> expenses, String category) {
-    return expenses.where((expense) => 
-      expense.category.toLowerCase() == category.toLowerCase()
-    ).toList();
+    return expenses
+        .where((expense) => expense.category.name.toLowerCase() == category.toLowerCase())
+        .toList();
   }
 }

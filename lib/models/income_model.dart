@@ -1,6 +1,6 @@
 import 'category_model.dart';
 
-class Expense {
+class Income {
   final String id;
   final String title;
   final double amount;
@@ -8,7 +8,7 @@ class Expense {
   final DateTime date;
   final String description;
 
-  Expense({
+  Income({
     required this.id,
     required this.title,
     required this.amount,
@@ -17,11 +17,7 @@ class Expense {
     required this.description,
   });
 
-  // Getter untuk format tampilan mata uang
   String get formattedAmount => 'Rp ${amount.toStringAsFixed(0)}';
-  
-  // Getter untuk format tampilan tanggal
-  String get formattedDate {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+
+  String get formattedDate => '${date.day}/${date.month}/${date.year}';
 }

@@ -1,66 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../data/category_expenses_data.dart';
+import '../data/expense_data.dart';
 import '../models/category_model.dart';
 import '../models/expense_model.dart';
-import 'package:intl/intl.dart';
 
 class AdvancedExpenseListScreen extends StatefulWidget {
+  const AdvancedExpenseListScreen({super.key});
+
   @override
   _AdvancedExpenseListScreenState createState() =>
       _AdvancedExpenseListScreenState();
 }
 
 class _AdvancedExpenseListScreenState extends State<AdvancedExpenseListScreen> {
-  final List<Category> categories = [
-    Category(name: 'Semua', icon: Icons.all_inclusive, color: Colors.grey),
-    Category(name: 'Makanan', icon: Icons.fastfood, color: Colors.orange),
-    Category(name: 'Transportasi', icon: Icons.directions_car, color: Colors.blue),
-    Category(name: 'Utilitas', icon: Icons.power, color: Colors.green),
-    Category(name: 'Hiburan', icon: Icons.movie, color: Colors.purple),
-    Category(name: 'Pendidikan', icon: Icons.school, color: Colors.teal),
-  ];
+  // Menggunakan data dari file terpusat
+  final List<Category> categories = initialExpenseCategories;
+  final List<Expense> expenses = dummyExpenses;
 
-  List<Expense> expenses = [
-    Expense(id: '1', title: 'Nasi Goreng', amount: 25000, category: 'Makanan', date: DateTime.now(), description: 'Makan malam'),
-    Expense(id: '2', title: 'Tiket Bioskop', amount: 50000, category: 'Hiburan', date: DateTime.now().subtract(Duration(days: 1)), description: 'Nonton film baru'),
-    Expense(id: '3', title: 'Bensin', amount: 100000, category: 'Transportasi', date: DateTime.now().subtract(Duration(days: 2)), description: 'Isi bensin motor'),
-    Expense(id: '4', title: 'Bayar Listrik', amount: 200000, category: 'Utilitas', date: DateTime.now().subtract(Duration(days: 3)), description: 'Tagihan bulan ini'),
-    Expense(id: '5', title: 'Buku Flutter', amount: 150000, category: 'Pendidikan', date: DateTime.now().subtract(Duration(days: 4)), description: 'Beli buku di Gramedia'),
-  ];
-  
   List<Expense> filteredExpenses = [];
-  String selectedCategory = 'Semua';
+  Category? selectedCategory;
   TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // Atur filter awal ke "Semua"
+    selectedCategory = categories.firstWhere((cat) => cat.name == 'Semua');
     filteredExpenses = expenses;
+    searchController.addListener(_filterExpenses);
   }
 
-  Color _getCategoryColor(String categoryName) {
-    return categories.firstWhere((cat) => cat.name == categoryName, orElse: () => categories.first).color;
-  }
-
-  IconData _getCategoryIcon(String categoryName) {
-    return categories.firstWhere((cat) => cat.name == categoryName, orElse: () => categories.first).icon;
+  @override
+  void dispose() {
+    searchController.removeListener(_filterExpenses);
+    searchController.dispose();
+    super.dispose();
   }
 
   void _showExpenseDetails(BuildContext context, Expense expense) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(expense.title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-              Text(expense.formattedAmount, style: TextStyle(fontSize: 18, color: Colors.red[600])),
-              SizedBox(height: 10),
-              Text('${expense.category} • ${expense.formattedDate}'),
-              SizedBox(height: 10),
+              Text(expense.title,
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              Text(expense.formattedAmount,
+                  style: TextStyle(fontSize: 18, color: Colors.red[600])),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(expense.category.icon, color: expense.category.color, size: 16),
+                  const SizedBox(width: 8),
+                  Text('${expense.category.name} • ${expense.formattedDate}'),
+                ],
+              ),
+              const SizedBox(height: 10),
               Text(expense.description),
             ],
           ),
@@ -80,53 +86,70 @@ class _AdvancedExpenseListScreenState extends State<AdvancedExpenseListScreen> {
         children: [
           // Search bar
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: searchController,
               decoration: InputDecoration(
                 hintText: 'Cari pengeluaran...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onChanged: (value) {
-                _filterExpenses();
-              },
             ),
           ),
-          
+
           // Category filter
           Container(
             height: 50,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: categories.length,
               itemBuilder: (context, index) {
                 final category = categories[index];
-                return Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    avatar: Icon(category.icon, color: selectedCategory == category.name ? Colors.white : category.color),
-                    label: Text(category.name),
-                    selected: selectedCategory == category.name,
-                    onSelected: (selected) {
-                      setState(() {
-                        selectedCategory = category.name;
-                        _filterExpenses();
-                      });
-                    },
-                    selectedColor: _getCategoryColor(category.name),
-                    labelStyle: TextStyle(color: selectedCategory == category.name ? Colors.white : Colors.black),
-                    backgroundColor: Colors.grey[200],
-                    checkmarkColor: Colors.white,
+                final isSelected = selectedCategory?.name == category.name;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedCategory = category;
+                      _filterExpenses();
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? category.color : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? category.color : Colors.grey[300]!,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          category.icon,
+                          size: 18,
+                          color: isSelected ? Colors.white : Colors.black54,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          category.name,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
-          
+
           // Statistics summary
           Container(
             padding: EdgeInsets.all(16),
@@ -142,33 +165,36 @@ class _AdvancedExpenseListScreenState extends State<AdvancedExpenseListScreen> {
           
           // Expense list
           Expanded(
-            child: filteredExpenses.isEmpty 
-              ? Center(child: Text('Tidak ada pengeluaran ditemukan'))
-              : ListView.builder(
-                  itemCount: filteredExpenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = filteredExpenses[index];
-                    return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: _getCategoryColor(expense.category),
-                          child: Icon(_getCategoryIcon(expense.category), color: Colors.white),
-                        ),
-                        title: Text(expense.title),
-                        subtitle: Text('${expense.category} • ${expense.formattedDate}'),
-                        trailing: Text(
-                          expense.formattedAmount,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red[600],
+            child: filteredExpenses.isEmpty
+                ? const Center(child: Text('Tidak ada pengeluaran ditemukan'))
+                : ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: filteredExpenses.length,
+                    itemBuilder: (context, index) {
+                      final expense = filteredExpenses[index];
+                      return Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: expense.category.color,
+                            child: Icon(expense.category.icon,
+                                color: Colors.white),
                           ),
+                          title: Text(expense.title,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(expense.formattedDate),
+                          trailing: Text(expense.formattedAmount,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red)),
+                          onTap: () => _showExpenseDetails(context, expense),
                         ),
-                        onTap: () => _showExpenseDetails(context, expense),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -178,13 +204,14 @@ class _AdvancedExpenseListScreenState extends State<AdvancedExpenseListScreen> {
   void _filterExpenses() {
     setState(() {
       filteredExpenses = expenses.where((expense) {
-        bool matchesSearch = searchController.text.isEmpty || 
-          expense.title.toLowerCase().contains(searchController.text.toLowerCase()) ||
-          expense.description.toLowerCase().contains(searchController.text.toLowerCase());
-        
-        bool matchesCategory = selectedCategory == 'Semua' || 
-          expense.category == selectedCategory;
-        
+        final searchLower = searchController.text.toLowerCase();
+        bool matchesSearch = searchLower.isEmpty ||
+            expense.title.toLowerCase().contains(searchLower) ||
+            expense.description.toLowerCase().contains(searchLower);
+
+        bool matchesCategory = selectedCategory?.name == 'Semua' ||
+            expense.category.name == selectedCategory?.name;
+
         return matchesSearch && matchesCategory;
       }).toList();
     });

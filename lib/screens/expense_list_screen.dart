@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/expense_data.dart';
 import '../models/expense_model.dart';
 
 class ExpenseListScreen extends StatelessWidget {
@@ -6,73 +7,8 @@ class ExpenseListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Data sample menggunakan List<Expense>
-    final List<Expense> expenses = [
-      Expense(
-        id: '1',
-        title: 'Belanja Bulanan',
-        amount: 150000,
-        category: 'Makanan',
-        date: DateTime(2024, 9, 15),
-        description: 'Belanja kebutuhan bulanan di supermarket',
-      ),
-      Expense(
-        id: '2',
-        title: 'Bensin Motor',
-        amount: 50000,
-        category: 'Transportasi',
-        date: DateTime(2024, 9, 14),
-        description: 'Isi bensin motor untuk transportasi',
-      ),
-      Expense(
-        id: '3',
-        title: 'Kopi di Cafe',
-        amount: 25000,
-        category: 'Makanan',
-        date: DateTime(2024, 9, 14),
-        description: 'Ngopi pagi dengan teman',
-      ),
-      Expense(
-        id: '4',
-        title: 'Tagihan Internet',
-        amount: 300000,
-        category: 'Utilitas',
-        date: DateTime(2024, 9, 13),
-        description: 'Tagihan internet bulanan',
-      ),
-      Expense(
-        id: '5',
-        title: 'Tiket Bioskop',
-        amount: 100000,
-        category: 'Hiburan',
-        date: DateTime(2024, 9, 12),
-        description: 'Nonton film weekend bersama keluarga',
-      ),
-      Expense(
-        id: '6',
-        title: 'Beli Buku',
-        amount: 75000,
-        category: 'Pendidikan',
-        date: DateTime(2024, 9, 11),
-        description: 'Buku pemrograman untuk belajar',
-      ),
-      Expense(
-        id: '7',
-        title: 'Makan Siang',
-        amount: 35000,
-        category: 'Makanan',
-        date: DateTime(2024, 9, 11),
-        description: 'Makan siang di restoran',
-      ),
-      Expense(
-        id: '8',
-        title: 'Ongkos Bus',
-        amount: 10000,
-        category: 'Transportasi',
-        date: DateTime(2024, 9, 10),
-        description: 'Ongkos perjalanan harian ke kampus',
-      ),
-    ];
+    // Data sample sekarang diambil dari file terpusat
+    final List<Expense> expenses = dummyExpenses;
 
     return Scaffold(
       appBar: AppBar(
@@ -114,53 +50,28 @@ class ExpenseListScreen extends StatelessWidget {
           // ListView untuk menampilkan daftar pengeluaran
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               itemCount: expenses.length,
               itemBuilder: (context, index) {
                 final expense = expenses[index];
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   elevation: 2,
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: _getCategoryColor(expense.category),
-                      child: Icon(
-                        _getCategoryIcon(expense.category),
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      backgroundColor: expense.category.color,
+                      child: Icon(expense.category.icon, color: Colors.white),
                     ),
                     title: Text(
                       expense.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          expense.category,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          expense.formattedDate,
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
+                    subtitle: Text(expense.formattedDate),
                     trailing: Text(
                       expense.formattedAmount,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.red[600],
+                        color: Colors.red,
                       ),
                     ),
                     onTap: () {
@@ -176,11 +87,11 @@ class ExpenseListScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Fitur tambah pengeluaran segera hadir!')),
+            const SnackBar(content: Text('Fitur tambah pengeluaran segera hadir!')),
           );
         },
         backgroundColor: Colors.blue,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -189,42 +100,6 @@ class ExpenseListScreen extends StatelessWidget {
   String _calculateTotal(List<Expense> expenses) {
     double total = expenses.fold(0, (sum, expense) => sum + expense.amount);
     return 'Rp ${total.toStringAsFixed(0)}';
-  }
-
-  // Method untuk mendapatkan warna berdasarkan kategori
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'makanan':
-        return Colors.orange;
-      case 'transportasi':
-        return Colors.green;
-      case 'utilitas':
-        return Colors.purple;
-      case 'hiburan':
-        return Colors.pink;
-      case 'pendidikan':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // Method untuk mendapatkan icon berdasarkan kategori
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'makanan':
-        return Icons.restaurant;
-      case 'transportasi':
-        return Icons.directions_car;
-      case 'utilitas':
-        return Icons.home;
-      case 'hiburan':
-        return Icons.movie;
-      case 'pendidikan':
-        return Icons.school;
-      default:
-        return Icons.attach_money;
-    }
   }
 
   // Method untuk menampilkan detail pengeluaran dalam dialog
@@ -238,18 +113,18 @@ class ExpenseListScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Jumlah: ${expense.formattedAmount}'),
-            SizedBox(height: 8),
-            Text('Kategori: ${expense.category}'),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
+            Text('Kategori: ${expense.category.name}'),
+            const SizedBox(height: 8),
             Text('Tanggal: ${expense.formattedDate}'),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text('Deskripsi: ${expense.description}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'),
+            child: const Text('Tutup'),
           ),
         ],
       ),

@@ -35,6 +35,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   Category? selectedCategory;
   final TextEditingController searchCtrl = TextEditingController();
   final GlobalKey _modeBtnKey = GlobalKey();
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   @override
   void initState() {
@@ -84,6 +85,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildMonthSelector(),
+                const SizedBox(height: 12),
                 _buildDonutAndLegendCard(),
                 const SizedBox(height: 16),
                 _buildCategoryChips(),
@@ -123,6 +126,51 @@ class _StatisticsPageState extends State<StatisticsPage> {
         },
       ),
     );
+  }
+
+  Widget _buildMonthSelector() {
+    final now = DateTime.now();
+    final bool isCurrentMonth = _selectedMonth.year == now.year && _selectedMonth.month == now.month;
+    String label = DateFormat('MMM yyyy', 'en_US').format(_selectedMonth);
+    // Capitalize properly (already), keep style consistent
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded),
+            color: primaryColor,
+            onPressed: () => _changeMonth(-1),
+            tooltip: 'Previous month',
+          ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded),
+            color: isCurrentMonth ? Colors.grey : primaryColor,
+            onPressed: isCurrentMonth ? null : () => _changeMonth(1),
+            tooltip: 'Next month',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeMonth(int delta) {
+    final y = _selectedMonth.year;
+    final m = _selectedMonth.month + delta;
+    final newDate = DateTime(y, m);
+    setState(() => _selectedMonth = DateTime(newDate.year, newDate.month));
   }
 
   Widget _buildModeDropdown() {
@@ -596,6 +644,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Map<int, double> _weeklyTotals() {
     final Map<int, double> res = {for (var i = 0; i < 7; i++) i: 0.0};
+    // Use only data within selected month
     if (mode == StatMode.expense) {
       for (final e in _filteredExpenses()) {
         final wd = e.date.weekday; // 1..7
@@ -603,25 +652,26 @@ class _StatisticsPageState extends State<StatisticsPage> {
         res[idx] = (res[idx] ?? 0) + e.amount;
       }
     } else {
-      for (final i in _filteredIncomes()) {
-        final wd = i.date.weekday; // 1..7
+      for (final inc in _filteredIncomes()) {
+        final wd = inc.date.weekday; // 1..7
         final idx = (wd - 1) % 7;
-        res[idx] = (res[idx] ?? 0) + i.amount;
+        res[idx] = (res[idx] ?? 0) + inc.amount;
       }
     }
     return res;
   }
 
   double _weekOverWeekForCurrentFilter() {
+    // Compute WoW within the selected month only
     if (mode == StatMode.expense) {
-      final data = _filteredExpenses(ignoreWeekWindow: true);
+      final data = _filteredExpenses();
       return weekOverWeekPercent<Expense>(
         data,
         (e) => e.date,
         (e) => e.amount,
       );
     } else {
-      final data = _filteredIncomes(ignoreWeekWindow: true);
+      final data = _filteredIncomes();
       return weekOverWeekPercent<Income>(
         data,
         (i) => i.date,
@@ -638,12 +688,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           e.title.toLowerCase().contains(searchLower) ||
           e.description.toLowerCase().contains(searchLower);
       final matchesCat = sc == null || sc.name == 'Semua' || e.category.name == sc.name;
-
-      final matchesWeek = ignoreWeekWindow
-          ? true
-          : du.isSameDate(startOfWeek(DateTime.now()), startOfWeek(e.date));
-
-      return matchesSearch && matchesCat && matchesWeek;
+      final matchesMonth = e.date.year == _selectedMonth.year && e.date.month == _selectedMonth.month;
+      return matchesSearch && matchesCat && matchesMonth;
     }).toList();
   }
 
@@ -655,12 +701,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           i.title.toLowerCase().contains(searchLower) ||
           i.description.toLowerCase().contains(searchLower);
       final matchesCat = sc == null || sc.name == 'Semua' || i.category.name == sc.name;
-
-      final matchesWeek = ignoreWeekWindow
-          ? true
-          : du.isSameDate(startOfWeek(DateTime.now()), startOfWeek(i.date));
-
-      return matchesSearch && matchesCat && matchesWeek;
+      final matchesMonth = i.date.year == _selectedMonth.year && i.date.month == _selectedMonth.month;
+      return matchesSearch && matchesCat && matchesMonth;
     }).toList();
   }
 

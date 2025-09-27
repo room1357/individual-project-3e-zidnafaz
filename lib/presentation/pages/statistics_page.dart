@@ -15,6 +15,7 @@ import '../widgets/app_bottom_nav.dart';
 import '../widgets/transaction_widgets.dart';
 import 'home_page.dart';
 import 'wallet_page.dart';
+import 'profile_page.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -113,6 +114,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           } else if (index == 2) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const WalletPage()),
+            );
+          } else if (index == 3) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
             );
           }
         },

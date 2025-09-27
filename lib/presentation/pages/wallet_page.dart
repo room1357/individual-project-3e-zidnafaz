@@ -13,6 +13,8 @@ import '../widgets/wallet_card.dart';
 import '../widgets/total_balance_card.dart';
 import 'home_page.dart';
 import 'statistics_page.dart';
+import 'wallet_detail_page.dart';
+import 'profile_page.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
@@ -89,6 +91,10 @@ class _WalletPageState extends State<WalletPage> {
             );
           } else if (index == 2) {
             setState(() => _currentIndex = 2);
+          } else if (index == 3) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
           }
         },
       ),
@@ -100,7 +106,14 @@ class _WalletPageState extends State<WalletPage> {
       for (final w in wallets)
         WalletCard(
           wallet: w.copyWith(balance: balances[w.id] ?? w.balance),
-          onTap: () {},
+          onTap: () {
+            final effective = w.copyWith(balance: balances[w.id] ?? w.balance);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => WalletDetailPage(wallet: effective),
+              ),
+            );
+          },
         ),
       _buildAddTile(),
     ];

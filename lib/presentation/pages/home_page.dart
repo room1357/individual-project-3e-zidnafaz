@@ -15,6 +15,7 @@ import '../../trial_screens/expense_list_screen.dart';
 import '../../trial_screens/advance_expense_list_screen.dart';
 import '../../trial_screens/looping_screen.dart';
 import 'wallet_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -173,6 +174,10 @@ class _HomePageState extends State<HomePage> {
           } else if (index == 2) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const WalletPage()),
+            );
+          } else if (index == 3) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
             );
           } else {
             setState(() => _currentIndex = index);

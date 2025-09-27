@@ -8,6 +8,7 @@ class TotalBalanceCard extends StatelessWidget {
   final String titleLeft;
   final String subLabel;
   final IconData? trailingIcon;
+  final bool compact;
 
   const TotalBalanceCard({
     super.key,
@@ -15,27 +16,33 @@ class TotalBalanceCard extends StatelessWidget {
     this.titleLeft = 'Hey, Jacob!',
     this.subLabel = 'Total Balance',
     this.trailingIcon,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final EdgeInsets padding = compact ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
+    final double titleFontSize = compact ? 16 : 18;
+    final double amountFontSize = compact ? 24 : 32;
+    final double subLabelFontSize = compact ? 12 : 14;
+    final BorderRadius radius = BorderRadius.circular(compact ? 16 : 20);
+    final BoxShadow shadow = BoxShadow(
+      color: AppColors.primary.withOpacity(0.3),
+      blurRadius: compact ? 12 : 15,
+      offset: Offset(0, compact ? 6 : 8),
+    );
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: padding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: radius,
+        boxShadow: [shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,9 +52,9 @@ class TotalBalanceCard extends StatelessWidget {
             children: [
               Text(
                 titleLeft,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: titleFontSize,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -55,7 +62,7 @@ class TotalBalanceCard extends StatelessWidget {
                 Icon(trailingIcon, color: Colors.white.withOpacity(0.8)),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 8 : 12),
           FittedBox(
             alignment: Alignment.centerLeft,
             fit: BoxFit.scaleDown,
@@ -66,16 +73,16 @@ class TotalBalanceCard extends StatelessWidget {
                 decimalDigits: 0,
               ).format(amount),
               maxLines: 1,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 32,
+                fontSize: amountFontSize,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
           Text(
             subLabel,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: Colors.white70, fontSize: subLabelFontSize),
           ),
         ],
       ),

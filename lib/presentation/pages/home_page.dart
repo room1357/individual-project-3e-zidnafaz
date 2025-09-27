@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
-import '../models/expense_model.dart';
-import '../data/expense_data.dart';
-import '../models/income_model.dart';
-import '../data/income_data.dart';
-import '../trial_screens/expense_list_screen.dart';
-import '../trial_screens/advance_expense_list_screen.dart';
-import '../trial_screens/looping_screen.dart';
 import 'package:intl/intl.dart';
-import '../utils/date_utils.dart';
-import '../utils/stats_utils.dart';
-import 'statistics_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+import '../../core/constants/app_colors.dart';
+import '../../core/utils/date_utils.dart';
+import '../../core/utils/stats_utils.dart';
+import '../../data/expense_data.dart';
+import '../../data/income_data.dart';
+import '../../data/models/expense_model.dart';
+import '../../data/models/income_model.dart';
+import '../widgets/app_bottom_nav.dart';
+import '../widgets/transaction_widgets.dart';
+import 'statistics_page.dart';
+import '../../trial_screens/expense_list_screen.dart';
+import '../../trial_screens/advance_expense_list_screen.dart';
+import '../../trial_screens/looping_screen.dart';
+import 'wallet_page.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-
-  // Main app color
-  final Color primaryColor = const Color(0xFF003E68);
 
   // Menggunakan data terpusat
   final List<Expense> expenses = dummyExpenses;
@@ -75,14 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: primaryColor,
+        foregroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: false,
         actions: [
           IconButton(
-            onPressed: () {
-              // Handle search
-            },
+            onPressed: () {},
             icon: const Icon(Icons.search),
           ),
           PopupMenuButton<String>(
@@ -114,21 +114,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   break;
               }
             },
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'expense_list',
-                    child: Text('Expense List'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'advanced_expense_list',
-                    child: Text('Advanced Expense List'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'looping_examples',
-                    child: Text('Looping Examples'),
-                  ),
-                ],
+            itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'expense_list',
+                child: Text('Expense List'),
+              ),
+              PopupMenuItem<String>(
+                value: 'advanced_expense_list',
+                child: Text('Advanced Expense List'),
+              ),
+              PopupMenuItem<String>(
+                value: 'looping_examples',
+                child: Text('Looping Examples'),
+              ),
+            ],
             icon: const Icon(Icons.more_vert),
           ),
         ],
@@ -140,11 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Total Balance Section
                 _buildTotalBalanceCard(),
                 const SizedBox(height: 20),
-
-                // Income and Expense Cards
                 Row(
                   children: [
                     Expanded(child: _buildIncomeCard()),
@@ -153,8 +149,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 30),
-
-                // Activity Section
                 _buildActivitySection(),
               ],
             ),
@@ -163,34 +157,32 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primary,
         elevation: 4,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: SizedBox(
-        height: 60, // Enforce tinggi 40 dari parent
-        child: BottomAppBar(
-          elevation: 8,
-          color: Colors.white, // Warna background navbar
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_rounded, 0),
-              _buildNavItem(Icons.bar_chart_rounded, 1),
-              const SizedBox(width: 64), // space for FAB
-              _buildNavItem(Icons.account_balance_wallet_rounded, 2),
-              _buildNavItem(Icons.person_rounded, 3),
-            ],
-          ),
-        ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const StatisticsPage()),
+            );
+          } else if (index == 2) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const WalletPage()),
+            );
+          } else {
+            setState(() => _currentIndex = index);
+          }
+        },
       ),
     );
   }
 
   Widget _buildTotalBalanceCard() {
-    // Menghitung total pemasukan/pengeluaran dari data dummy
     final totalIncome = incomes.fold(0.0, (sum, item) => sum + item.amount);
     final totalExpense = expenses.fold(0.0, (sum, item) => sum + item.amount);
     final totalBalance = totalIncome - totalExpense;
@@ -202,12 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primaryColor, primaryColor.withOpacity(0.8)],
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.3),
+            color: AppColors.primary.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -273,8 +265,8 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              const Text(
+            children: const [
+              Text(
                 'Income',
                 style: TextStyle(
                   fontSize: 14,
@@ -282,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Icon(Icons.trending_up, color: Colors.white, size: 20),
             ],
           ),
@@ -331,8 +323,8 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              const Text(
+            children: const [
+              Text(
                 'Expense',
                 style: TextStyle(
                   fontSize: 14,
@@ -340,8 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const Spacer(),
-              const Icon(Icons.trending_down, color: Colors.white, size: 20),
+              Spacer(),
+              Icon(Icons.trending_down, color: Colors.white, size: 20),
             ],
           ),
           const SizedBox(height: 8),
@@ -377,18 +369,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildActivitySection() {
-    // Create a list of pairs (transaction, DateTime)
     final txWithDate =
-        transactions
-            .map((t) => {'data': t, 'dt': parseTransactionDateTime(t)})
-            .toList();
+        transactions.map((t) => {'data': t, 'dt': parseTransactionDateTime(t)}).toList();
 
-    // Sort descending by time
-    txWithDate.sort(
-      (a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime),
-    );
+    txWithDate.sort((a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime));
 
-    // Group by calendar day
     final Map<DateTime, List<Map<String, dynamic>>> groups = {};
     for (final item in txWithDate) {
       final dt = item['dt'] as DateTime;
@@ -397,159 +382,28 @@ class _HomeScreenState extends State<HomeScreen> {
       groups[key]!.add(item['data'] as Map<String, dynamic>);
     }
 
-    // Sort group keys descending (latest date first)
     final dates = groups.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Recent Transactions',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 16),
         for (final date in dates) ...[
-          _buildTransactionDayCard(date, groups[date]!),
+          TransactionDayCard(
+            title: sectionTitleForDate(date),
+            items: groups[date]!,
+          ),
           const SizedBox(height: 12),
         ],
       ],
-    );
-  }
-
-  Widget _buildTransactionDayCard(
-    DateTime date,
-    List<Map<String, dynamic>> items,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header tanggal
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              sectionTitleForDate(date),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: primaryColor,
-              ),
-            ),
-          ),
-          // Pemisah setelah header tanggal
-          Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-          // Daftar transaksi dengan garis pemisah
-          for (int i = 0; i < items.length; i++) ...[
-            if (i > 0)
-              Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: _buildTransactionRow(items[i]),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTransactionRow(Map<String, dynamic> transaction) {
-    final num amount = (transaction['amount'] ?? 0) as num;
-    final bool isIncome = amount > 0;
-    final String sign = amount > 0 ? '+' : (amount < 0 ? '-' : '');
-    final String formattedAmount = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp. ',
-      decimalDigits: 0,
-    ).format(amount.abs());
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: (transaction['color'] as Color).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            transaction['icon'] as IconData,
-            color: transaction['color'] as Color,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                transaction['title'] as String,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: primaryColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                transaction['time']?.toString() ?? '',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          '$sign$formattedAmount',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isIncome ? Colors.green : Colors.red,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, int index) {
-    final isSelected = _currentIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (index == 1) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
-            );
-          } else {
-            setState(() {
-              _currentIndex = index;
-            });
-          }
-        },
-        child: Container(
-          height: 40,
-          alignment: Alignment.center, // Center icon di tengah
-          child: Icon(
-            icon,
-            color: isSelected ? primaryColor : Colors.grey,
-            size: 28, // Kecilkan icon sedikit
-          ),
-        ),
-      ),
     );
   }
 }

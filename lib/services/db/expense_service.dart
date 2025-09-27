@@ -1,4 +1,4 @@
-import '../data/models/expense_model.dart';
+import '../../data/models/expense_model.dart';
 
 class ExpenseManager {
   static List<Expense> expenses = [/* data expenses */];

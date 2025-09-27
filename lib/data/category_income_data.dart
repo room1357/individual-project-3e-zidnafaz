@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/category_model.dart';
+import 'models/category_model.dart';
 
 // Kategori untuk pemasukan (income)
 final List<Category> initialIncomeCategories = [

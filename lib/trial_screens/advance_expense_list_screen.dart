@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../data/category_expenses_data.dart';
 import '../data/expense_data.dart';
-import '../models/category_model.dart';
-import '../models/expense_model.dart';
+import '../data/models/category_model.dart';
+import '../data/models/expense_model.dart';
 
 class AdvancedExpenseListScreen extends StatefulWidget {
   const AdvancedExpenseListScreen({super.key});

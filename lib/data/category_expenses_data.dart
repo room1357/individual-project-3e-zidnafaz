@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/category_model.dart';
+import 'models/category_model.dart';
 
 final List<Category> initialExpenseCategories = [
   Category(name: 'Makanan', icon: Icons.fastfood, color: Colors.orange),

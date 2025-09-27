@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/welcome_screen.dart';
+import 'presentation/pages/welcome_page.dart';
+import 'core/constants/app_colors.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,9 +14,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
       ),
-      home: const WelcomeScreen(),
+      home: const WelcomePage(),
     );
   }
 }

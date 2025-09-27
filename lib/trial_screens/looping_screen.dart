@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/expense_model.dart';
+import '../data/models/expense_model.dart';
 import '../data/category_expenses_data.dart';
 
 class LoopingScreen extends StatelessWidget {

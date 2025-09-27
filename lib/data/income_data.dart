@@ -1,4 +1,4 @@
-import '../models/income_model.dart';
+import 'models/income_model.dart';
 import 'category_income_data.dart';
 
 List<Income> dummyIncomes = [
@@ -9,6 +9,7 @@ List<Income> dummyIncomes = [
     category: initialIncomeCategories.firstWhere((c) => c.name == 'Gaji'),
     date: DateTime.now().subtract(const Duration(days: 0, hours: 3)),
     description: 'Gaji bulan ini',
+    walletId: 'w1', // Cash
   ),
   Income(
     id: 'i2',
@@ -17,6 +18,7 @@ List<Income> dummyIncomes = [
     category: initialIncomeCategories.firstWhere((c) => c.name == 'Bonus'),
     date: DateTime.now().subtract(const Duration(days: 2, hours: 1)),
     description: 'Bonus penyelesaian proyek',
+    walletId: 'w2', // ShopeePay
   ),
   Income(
     id: 'i3',
@@ -25,5 +27,6 @@ List<Income> dummyIncomes = [
     category: initialIncomeCategories.firstWhere((c) => c.name == 'Investasi'),
     date: DateTime.now().subtract(const Duration(days: 5)),
     description: 'Dividen kuartal 3',
+    walletId: 'w3', // GoPay
   ),
 ];

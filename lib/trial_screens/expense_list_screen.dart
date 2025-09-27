@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/expense_data.dart';
-import '../models/expense_model.dart';
+import '../data/models/expense_model.dart';
 
 class ExpenseListScreen extends StatelessWidget {
   const ExpenseListScreen({super.key});

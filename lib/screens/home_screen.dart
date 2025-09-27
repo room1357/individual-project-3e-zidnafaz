@@ -9,6 +9,7 @@ import '../trial_screens/looping_screen.dart';
 import 'package:intl/intl.dart';
 import '../utils/date_utils.dart';
 import '../utils/stats_utils.dart';
+import 'statistics_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Map data income + expenses -> struktur transaksi yang diharapkan UI activity lama
   List<Map<String, dynamic>> get transactions {
     final incomeTx = incomes.map(
       (i) => {
@@ -530,9 +530,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == 1) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+            );
+          } else {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
         },
         child: Container(
           height: 40,

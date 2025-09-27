@@ -56,4 +56,32 @@ List<Expense> dummyExpenses = [
     description: 'Beli buku di Gramedia',
     walletId: 'w1',
   ),
+  // August expenses
+  Expense(
+    id: 'e-aug-1',
+    title: 'Makan Siang',
+    amount: 35000,
+    category: initialExpenseCategories.firstWhere((cat) => cat.name == 'Makanan'),
+    date: DateTime(DateTime.now().year, 8, 12, 12, 30),
+    description: 'Nasi ayam penyet',
+    walletId: 'w2', // ShopeePay
+  ),
+  Expense(
+    id: 'e-aug-2',
+    title: 'Transport Grab',
+    amount: 42000,
+    category: initialExpenseCategories.firstWhere((cat) => cat.name == 'Transportasi'),
+    date: DateTime(DateTime.now().year, 8, 20, 9, 10),
+    description: 'GrabCar ke kantor',
+    walletId: 'w3', // GoPay
+  ),
+  Expense(
+    id: 'e-aug-3',
+    title: 'Pulsa',
+    amount: 50000,
+    category: initialExpenseCategories.firstWhere((cat) => cat.name == 'Utilitas'),
+    date: DateTime(DateTime.now().year, 8, 28, 18, 45),
+    description: 'Isi pulsa Telkomsel',
+    walletId: 'w1', // Cash
+  ),
 ];

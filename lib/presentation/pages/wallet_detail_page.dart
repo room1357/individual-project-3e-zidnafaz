@@ -22,8 +22,12 @@ class WalletDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final incomes = _walletIncomes();
     final expenses = _walletExpenses();
-    final totalIncome = incomes.fold<double>(0, (s, i) => s + i.amount);
-    final totalExpense = expenses.fold<double>(0, (s, e) => s + e.amount);
+    // Filter for current month to match 'This month' label
+    final now = DateTime.now();
+    final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month).toList();
+    final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month).toList();
+    final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
+    final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
 
     // wallet.balance is already the effective balance on the card if passed from WalletPage.
     final effectiveBalance = wallet.balance;

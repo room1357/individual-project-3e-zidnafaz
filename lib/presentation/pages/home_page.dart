@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart';
-import '../../core/utils/stats_utils.dart';
 import '../../data/expense_data.dart';
 import '../../data/income_data.dart';
 import '../../data/models/expense_model.dart';
@@ -31,18 +30,6 @@ class _HomePageState extends State<HomePage> {
   final List<Expense> expenses = dummyExpenses;
   final List<Income> incomes = dummyIncomes;
 
-  double _incomeWeekOverWeekPercent() {
-    return weekOverWeekPercent<Income>(incomes, (i) => i.date, (i) => i.amount);
-  }
-
-  double _expenseWeekOverWeekPercent() {
-    return weekOverWeekPercent<Expense>(
-      expenses,
-      (e) => e.date,
-      (e) => e.amount,
-    );
-  }
-
   List<Map<String, dynamic>> get transactions {
     final incomeTx = incomes.map(
       (i) => {
@@ -52,6 +39,7 @@ class _HomePageState extends State<HomePage> {
         'amount': i.amount, // income positif
         'icon': i.category.icon,
         'color': i.category.color,
+        'walletId': i.walletId,
       },
     );
     final expenseTx = expenses.map(
@@ -62,6 +50,7 @@ class _HomePageState extends State<HomePage> {
         'amount': -e.amount, // expense negatif
         'icon': e.category.icon,
         'color': e.category.color,
+        'walletId': e.walletId,
       },
     );
     return [...incomeTx, ...expenseTx].toList();
@@ -259,7 +248,6 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildIncomeCard() {
     final totalIncome = incomes.fold(0.0, (sum, item) => sum + item.amount);
-    final pct = _incomeWeekOverWeekPercent();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -302,14 +290,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            '${pct.toStringAsFixed(0)}% then last week',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          // Percentage removed as requested.
         ],
       ),
     );
@@ -317,7 +298,6 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildExpenseCard() {
     final totalExpense = expenses.fold(0.0, (sum, item) => sum + item.amount);
-    final pct = _expenseWeekOverWeekPercent();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -360,14 +340,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            '${pct.toStringAsFixed(0)}% then last week',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          // Percentage removed as requested.
         ],
       ),
     );

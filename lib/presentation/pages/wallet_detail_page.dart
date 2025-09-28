@@ -118,6 +118,8 @@ class WalletDetailPage extends StatelessWidget {
         'amount': i.amount, // positive
         'icon': i.category.icon,
         'color': i.category.color,
+        'walletId': i.walletId,
+        'walletName': wallet.name,
       },
     );
     final expenseTx = expenses.map(
@@ -128,6 +130,8 @@ class WalletDetailPage extends StatelessWidget {
         'amount': -e.amount, // negative
         'icon': e.category.icon,
         'color': e.category.color,
+        'walletId': e.walletId,
+        'walletName': wallet.name,
       },
     );
 

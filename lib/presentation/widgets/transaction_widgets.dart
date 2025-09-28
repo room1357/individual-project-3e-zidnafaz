@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../data/wallet_data.dart';
 
 class TransactionRow extends StatelessWidget {
   final Map<String, dynamic> transaction;
@@ -48,25 +49,51 @@ class TransactionRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                // Allow either 'time' alone or combined 'date • time'
-                transaction.containsKey('date')
-                    ? '${transaction['date']}  •  ${transaction['time'] ?? ''}'
-                    : (transaction['time']?.toString() ?? ''),
+                _walletLabel(transaction),
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
         ),
-        Text(
-          '$sign$formattedAmount',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isIncome ? Colors.green : Colors.red,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$sign$formattedAmount',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isIncome ? Colors.green : Colors.red,
+              ),
+            ),
+            const SizedBox(height: 2),
+            if ((transaction['time'] as String?)?.isNotEmpty == true)
+              Text(
+                transaction['time'] as String,
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              ),
+          ],
         ),
       ],
     );
+  }
+
+  String _walletLabel(Map<String, dynamic> tx) {
+    String? walletName;
+    // Prefer explicit walletName when provided
+    final String? explicit = tx['walletName'] as String?;
+    if (explicit != null && explicit.trim().isNotEmpty) {
+      walletName = explicit.trim();
+    } else {
+      // Fallback: use walletId to resolve name from dummyWallets
+      final String? wid = tx['walletId'] as String?;
+      if (wid != null) {
+        final match = dummyWallets.where((w) => w.id == wid);
+        if (match.isNotEmpty) walletName = match.first.name;
+      }
+    }
+
+    return walletName ?? '';
   }
 }
 

@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart' as du;
-import '../../core/utils/stats_utils.dart';
 import '../../data/category_expenses_data.dart';
 import '../../data/category_income_data.dart';
 import '../../data/expense_data.dart';
@@ -52,10 +51,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   List<Category> get _expenseCategories => initialExpenseCategories;
   List<Category> get _incomeCategories => initialIncomeCategories;
-  List<Category> get _allCategories => mode == StatMode.expense ? _expenseCategories : _incomeCategories;
+  List<Category> get _allCategories =>
+      mode == StatMode.expense ? _expenseCategories : _incomeCategories;
 
   String get _modeLabel => mode == StatMode.expense ? 'Expense' : 'Income';
-  IconData get _modeIcon => mode == StatMode.expense ? Icons.trending_down : Icons.trending_up;
+  IconData get _modeIcon =>
+      mode == StatMode.expense ? Icons.trending_down : Icons.trending_up;
 
   @override
   Widget build(BuildContext context) {
@@ -65,15 +66,16 @@ class _StatisticsPageState extends State<StatisticsPage> {
         backgroundColor: Colors.white,
         foregroundColor: primaryColor,
         elevation: 0,
-        titleSpacing: 12,
+        titleSpacing: 20,
         title: _buildModeDropdown(),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
           PopupMenuButton<String>(
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'filter', child: Text('Filter')),
-              PopupMenuItem(value: 'export', child: Text('Export')),
-            ],
+            itemBuilder:
+                (context) => const [
+                  PopupMenuItem(value: 'filter', child: Text('Filter')),
+                  PopupMenuItem(value: 'export', child: Text('Export')),
+                ],
             icon: const Icon(Icons.more_vert),
           ),
         ],
@@ -90,8 +92,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 _buildDonutAndLegendCard(),
                 const SizedBox(height: 16),
                 _buildCategoryChips(),
-                const SizedBox(height: 16),
-                _buildWeeklyChartCard(),
                 const SizedBox(height: 16),
                 _buildTransactionList(),
               ],
@@ -130,7 +130,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildMonthSelector() {
     final now = DateTime.now();
-    final bool isCurrentMonth = _selectedMonth.year == now.year && _selectedMonth.month == now.month;
+    final bool isCurrentMonth =
+        _selectedMonth.year == now.year && _selectedMonth.month == now.month;
     String label = DateFormat('MMM yyyy', 'en_US').format(_selectedMonth);
     // Capitalize properly (already), keep style consistent
     return Container(
@@ -139,7 +140,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
@@ -153,7 +158,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right_rounded),
@@ -177,8 +186,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return GestureDetector(
       key: _modeBtnKey,
       onTap: () async {
-        final button = _modeBtnKey.currentContext!.findRenderObject() as RenderBox;
-        final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+        final button =
+            _modeBtnKey.currentContext!.findRenderObject() as RenderBox;
+        final overlay =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
         final offset = button.localToGlobal(Offset.zero, ancestor: overlay);
         final size = button.size;
         final position = RelativeRect.fromLTRB(
@@ -188,26 +199,40 @@ class _StatisticsPageState extends State<StatisticsPage> {
           overlay.size.height - (offset.dy + size.height),
         );
 
-        final opposite = mode == StatMode.expense ? StatMode.income : StatMode.expense;
+        final opposite =
+            mode == StatMode.expense ? StatMode.income : StatMode.expense;
         final newMode = await showMenu<StatMode>(
           context: context,
           position: position,
           elevation: 12,
           color: Colors.white,
           shadowColor: Colors.black.withOpacity(0.15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          constraints: BoxConstraints(minWidth: size.width, maxWidth: size.width),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          constraints: BoxConstraints(
+            minWidth: size.width,
+            maxWidth: size.width,
+          ),
           items: [
             if (opposite == StatMode.expense)
               PopupMenuItem(
                 value: StatMode.expense,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(children: [
-                    const Icon(Icons.trending_down, color: Colors.red),
-                    const SizedBox(width: 10),
-                    Text('Expense', style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
-                  ]),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.trending_down, color: Colors.red),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Expense',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -215,11 +240,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 value: StatMode.income,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(children: [
-                    const Icon(Icons.trending_up, color: Colors.green),
-                    const SizedBox(width: 10),
-                    Text('Income', style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
-                  ]),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.trending_up, color: Colors.green),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Income',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -227,7 +260,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
         if (newMode != null && newMode != mode) {
           setState(() {
             mode = newMode;
-            selectedCategory = _allCategories.firstWhere((c) => c.name == 'Semua');
+            selectedCategory = _allCategories.firstWhere(
+              (c) => c.name == 'Semua',
+            );
           });
         }
       },
@@ -242,7 +277,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           children: [
             Icon(
               _modeIcon,
-              color: mode == StatMode.expense ? Colors.red[200] : Colors.green[200],
+              color:
+                  mode == StatMode.expense
+                      ? Colors.red[200]
+                      : Colors.green[200],
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -324,11 +362,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: s.color.withOpacity(0.10),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: s.color.withOpacity(0.7), width: 1),
+                            border: Border.all(
+                              color: s.color.withOpacity(0.7),
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             '${total == 0 ? 0 : (s.value / total * 100).round()}%',
@@ -377,8 +421,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           final cat = cats[i];
           final isSel = selectedCategory?.name == cat.name;
           final isAll = cat.name.toLowerCase() == 'semua';
-          final Color bgColor = isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[100]!);
-          final Color borderColor = isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[300]!);
+          final Color bgColor =
+              isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[100]!);
+          final Color borderColor =
+              isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[300]!);
           final Color iconColor = isSel ? Colors.white : Colors.black54;
           final Color textColor = isSel ? Colors.white : Colors.black87;
           return GestureDetector(
@@ -390,14 +436,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: borderColor, width: 1.5),
               ),
-              child: Row(children: [
-                Icon(cat.icon, size: 18, color: iconColor),
-                const SizedBox(width: 8),
-                Text(
-                  cat.name,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-                ),
-              ]),
+              child: Row(
+                children: [
+                  Icon(cat.icon, size: 18, color: iconColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    cat.name,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -407,148 +458,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildWeeklyChartCard() {
-    final weekly = _weeklyTotals();
-    final values = weekly.values.toList();
-    final maxVal = values.isEmpty ? 1.0 : values.reduce((a, b) => a > b ? a : b);
-    final color = mode == StatMode.expense ? const Color(0xFFF28080) : const Color(0xFF66D4CC);
-    final wow = _weekOverWeekForCurrentFilter();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      NumberFormat.compactCurrency(locale: 'id_ID', symbol: 'Rp ').format(values.fold(0.0, (s, v) => s + v)),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: primaryColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      mode == StatMode.expense
-                          ? 'expense for ${selectedCategory?.name.toLowerCase() == 'semua' ? 'all' : (selectedCategory?.name.toLowerCase() ?? 'all')}'
-                          : 'income for ${selectedCategory?.name.toLowerCase() == 'semua' ? 'all' : (selectedCategory?.name.toLowerCase() ?? 'all')}',
-                      style: TextStyle(color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${wow.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      color: wow >= 0 ? Colors.red : Colors.green,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text('then last week', style: TextStyle(color: Colors.grey[600])),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 160,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const labelHeight = 22.0;
-                final barMaxHeight = constraints.maxHeight - labelHeight - 8;
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(7, (i) {
-                    final dayKey = i; // 0..6 Mon..Sun
-                    final v = weekly[dayKey] ?? 0.0;
-                    final ratio = maxVal == 0 ? 0.0 : (v / maxVal).clamp(0.0, 1.0);
-                    final barHeight = ratio * barMaxHeight;
-                    final c1 = color.withOpacity(0.25 + 0.35 * ratio);
-                    final c2 = color.withOpacity(0.85);
-                    final isSunday = i == 6;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              height: barHeight,
-                              decoration: const BoxDecoration(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                  bottomRight: Radius.circular(10),
-                                ),
-                              ),
-                              foregroundDecoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [c1, c2],
-                                ),
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                  bottomRight: Radius.circular(10),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              height: labelHeight,
-                              child: Center(
-                                child: Text(
-                                  _weekdayLabel(i),
-                                  style: TextStyle(
-                                    color: isSunday ? Colors.red : Colors.grey[600],
-                                    fontWeight: isSunday ? FontWeight.w700 : FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Bar chart card removed as requested.
 
   Widget _buildTransactionList() {
     final tx = _filteredTransactions();
@@ -568,15 +478,22 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ],
         ),
         child: Center(
-          child: Text('Tidak ada transaksi', style: TextStyle(color: Colors.grey[600])),
+          child: Text(
+            'Tidak ada transaksi',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
         ),
       );
     }
 
     // Sort by datetime DESC and group by day like HomePage
     final txWithDate =
-        tx.map((t) => {'data': t, 'dt': du.parseTransactionDateTime(t)}).toList();
-    txWithDate.sort((a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime));
+        tx
+            .map((t) => {'data': t, 'dt': du.parseTransactionDateTime(t)})
+            .toList();
+    txWithDate.sort(
+      (a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime),
+    );
 
     final Map<DateTime, List<Map<String, dynamic>>> groups = {};
     for (final item in txWithDate) {
@@ -592,7 +509,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
       children: [
         Text(
           'Transactions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
         ),
         const SizedBox(height: 12),
         for (final date in dates) ...[
@@ -615,12 +536,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
       }
       return _expenseCategories
           .where((c) => c.name != 'Semua')
-          .map((c) => _ChartSegment(
-                label: c.name,
-                value: byCat[c.name] ?? 0,
-                color: c.color,
-                icon: c.icon,
-              ))
+          .map(
+            (c) => _ChartSegment(
+              label: c.name,
+              value: byCat[c.name] ?? 0,
+              color: c.color,
+              icon: c.icon,
+            ),
+          )
           .where((s) => s.value > 0)
           .toList();
     } else {
@@ -631,64 +554,36 @@ class _StatisticsPageState extends State<StatisticsPage> {
       }
       return _incomeCategories
           .where((c) => c.name != 'Semua')
-          .map((c) => _ChartSegment(
-                label: c.name,
-                value: byCat[c.name] ?? 0,
-                color: c.color,
-                icon: c.icon,
-              ))
+          .map(
+            (c) => _ChartSegment(
+              label: c.name,
+              value: byCat[c.name] ?? 0,
+              color: c.color,
+              icon: c.icon,
+            ),
+          )
           .where((s) => s.value > 0)
           .toList();
     }
   }
 
-  Map<int, double> _weeklyTotals() {
-    final Map<int, double> res = {for (var i = 0; i < 7; i++) i: 0.0};
-    // Use only data within selected month
-    if (mode == StatMode.expense) {
-      for (final e in _filteredExpenses()) {
-        final wd = e.date.weekday; // 1..7
-        final idx = (wd - 1) % 7;
-        res[idx] = (res[idx] ?? 0) + e.amount;
-      }
-    } else {
-      for (final inc in _filteredIncomes()) {
-        final wd = inc.date.weekday; // 1..7
-        final idx = (wd - 1) % 7;
-        res[idx] = (res[idx] ?? 0) + inc.amount;
-      }
-    }
-    return res;
-  }
+  // Weekly bucket helpers removed.
 
-  double _weekOverWeekForCurrentFilter() {
-    // Compute WoW within the selected month only
-    if (mode == StatMode.expense) {
-      final data = _filteredExpenses();
-      return weekOverWeekPercent<Expense>(
-        data,
-        (e) => e.date,
-        (e) => e.amount,
-      );
-    } else {
-      final data = _filteredIncomes();
-      return weekOverWeekPercent<Income>(
-        data,
-        (i) => i.date,
-        (i) => i.amount,
-      );
-    }
-  }
+  // Week-over-week percentage removed.
 
   List<Expense> _filteredExpenses({bool ignoreWeekWindow = false}) {
     final sc = selectedCategory;
     return expenses.where((e) {
       final searchLower = searchCtrl.text.toLowerCase();
-      final matchesSearch = searchLower.isEmpty ||
+      final matchesSearch =
+          searchLower.isEmpty ||
           e.title.toLowerCase().contains(searchLower) ||
           e.description.toLowerCase().contains(searchLower);
-      final matchesCat = sc == null || sc.name == 'Semua' || e.category.name == sc.name;
-      final matchesMonth = e.date.year == _selectedMonth.year && e.date.month == _selectedMonth.month;
+      final matchesCat =
+          sc == null || sc.name == 'Semua' || e.category.name == sc.name;
+      final matchesMonth =
+          e.date.year == _selectedMonth.year &&
+          e.date.month == _selectedMonth.month;
       return matchesSearch && matchesCat && matchesMonth;
     }).toList();
   }
@@ -697,41 +592,52 @@ class _StatisticsPageState extends State<StatisticsPage> {
     final sc = selectedCategory;
     return incomes.where((i) {
       final searchLower = searchCtrl.text.toLowerCase();
-      final matchesSearch = searchLower.isEmpty ||
+      final matchesSearch =
+          searchLower.isEmpty ||
           i.title.toLowerCase().contains(searchLower) ||
           i.description.toLowerCase().contains(searchLower);
-      final matchesCat = sc == null || sc.name == 'Semua' || i.category.name == sc.name;
-      final matchesMonth = i.date.year == _selectedMonth.year && i.date.month == _selectedMonth.month;
+      final matchesCat =
+          sc == null || sc.name == 'Semua' || i.category.name == sc.name;
+      final matchesMonth =
+          i.date.year == _selectedMonth.year &&
+          i.date.month == _selectedMonth.month;
       return matchesSearch && matchesCat && matchesMonth;
     }).toList();
   }
 
   List<Map<String, dynamic>> _filteredTransactions() {
     if (mode == StatMode.expense) {
-      return _filteredExpenses(ignoreWeekWindow: true).map((e) => {
-            'title': e.title,
-            'date': DateFormat('EEE, dd MMM', 'en_US').format(e.date),
-            'time': DateFormat('HH:mm').format(e.date),
-            'amount': -e.amount,
-            'icon': e.category.icon,
-            'color': e.category.color,
-          }).toList();
+      return _filteredExpenses(ignoreWeekWindow: true)
+          .map(
+            (e) => {
+              'title': e.title,
+              'date': DateFormat('EEE, dd MMM', 'en_US').format(e.date),
+              'time': DateFormat('HH:mm').format(e.date),
+              'amount': -e.amount,
+              'icon': e.category.icon,
+              'color': e.category.color,
+              'walletId': e.walletId,
+            },
+          )
+          .toList();
     } else {
-      return _filteredIncomes(ignoreWeekWindow: true).map((i) => {
-            'title': i.title,
-            'date': DateFormat('EEE, dd MMM', 'en_US').format(i.date),
-            'time': DateFormat('HH:mm').format(i.date),
-            'amount': i.amount,
-            'icon': i.category.icon,
-            'color': i.category.color,
-          }).toList();
+      return _filteredIncomes(ignoreWeekWindow: true)
+          .map(
+            (i) => {
+              'title': i.title,
+              'date': DateFormat('EEE, dd MMM', 'en_US').format(i.date),
+              'time': DateFormat('HH:mm').format(i.date),
+              'amount': i.amount,
+              'icon': i.category.icon,
+              'color': i.category.color,
+              'walletId': i.walletId,
+            },
+          )
+          .toList();
     }
   }
 
-  String _weekdayLabel(int index) {
-    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    return labels[index % 7];
-  }
+  // Week range label removed.
 }
 
 class _ChartSegment {
@@ -747,6 +653,8 @@ class _ChartSegment {
   });
 }
 
+// Weekly bucket model removed.
+
 class _DonutPainter extends CustomPainter {
   final List<_ChartSegment> segments;
   _DonutPainter({required this.segments});
@@ -760,14 +668,21 @@ class _DonutPainter extends CustomPainter {
     final total = segments.fold<double>(0, (s, e) => s + e.value);
     double start = -90 * 3.1415926535 / 180; // start from top
     final stroke = radius * 0.32;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.butt;
+    final paint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke
+          ..strokeCap = StrokeCap.butt;
 
     if (total == 0) {
       paint.color = Colors.grey[200]!;
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 0.8), 0, 6.283, false, paint);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius * 0.8),
+        0,
+        6.283,
+        false,
+        paint,
+      );
     } else {
       for (final s in segments) {
         final sweep = (s.value / total) * 6.28318530718;

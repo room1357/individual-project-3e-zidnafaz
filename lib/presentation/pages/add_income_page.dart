@@ -451,31 +451,25 @@ class _AddIncomePageState extends State<AddIncomePage> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.category, color: AppColors.primary),
+                              // Show default icon only when no category selected
+                              if (_selectedCategory == null)
+                                Icon(Icons.category, color: AppColors.primary)
+                              else
+                                Icon(
+                                  _selectedCategory!.icon,
+                                  color: _selectedCategory!.color,
+                                  size: 24,
+                                ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _selectedCategory == null
-                                    ? Text(
-                                        'Select Category',
-                                        style: TextStyle(color: Colors.grey[400]),
-                                      )
-                                    : Row(
-                                        children: [
-                                          Icon(
-                                            _selectedCategory!.icon,
-                                            color: _selectedCategory!.color,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            _selectedCategory!.name,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                child: Text(
+                                  _selectedCategory?.name ?? 'Select Category',
+                                  style: TextStyle(
+                                    color: _selectedCategory == null ? Colors.grey[400] : Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: _selectedCategory == null ? FontWeight.normal : FontWeight.w500,
+                                  ),
+                                ),
                               ),
                               Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
                             ],
@@ -488,9 +482,9 @@ class _AddIncomePageState extends State<AddIncomePage> {
                       // Wallet Section
                       _buildSectionTitle('Wallet'),
                       DropdownButtonFormField<Wallet>(
-                        // value: _selectedWallet,
+                        value: _selectedWallet,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
+                          // No prefixIcon, icon will come from selected wallet
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -501,6 +495,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                         ),
                         items: WalletService.getAllWallets().map((wallet) => DropdownMenuItem(
                               value: wallet,
@@ -512,6 +507,17 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                 ],
                               ),
                             )).toList(),
+                        selectedItemBuilder: (BuildContext context) {
+                          return WalletService.getAllWallets().map((wallet) {
+                            return Row(
+                              children: [
+                                Icon(wallet.icon, color: wallet.color, size: 20),
+                                const SizedBox(width: 12),
+                                Text('${wallet.name} • ${wallet.formattedBalance}'),
+                              ],
+                            );
+                          }).toList();
+                        },
                         onChanged: (Wallet? value) {
                           setState(() {
                             _selectedWallet = value;

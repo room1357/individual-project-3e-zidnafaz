@@ -598,16 +598,46 @@ class _TransferPageState extends State<TransferPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
 
-                      // Transfer Fee Section
+                // Transfer Fee Toggle Section
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Checkbox(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Transfer Fee',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Add transfer fee to this transaction',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
                             value: _hasFee,
-                            onChanged: (bool? value) {
+                            onChanged: (value) {
                               setState(() {
-                                _hasFee = value ?? false;
+                                _hasFee = value;
                                 if (!_hasFee) {
                                   _feeController.text = '0';
                                 }
@@ -615,45 +645,56 @@ class _TransferPageState extends State<TransferPage> {
                             },
                             activeColor: AppColors.primary,
                           ),
-                          _buildSectionTitle('Transfer Fee'),
                         ],
                       ),
-                      if (_hasFee)
+                      if (_hasFee) ...[
+                        const SizedBox(height: 16),
                         TextFormField(
                           controller: _feeController,
                           keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w600),
                           decoration: InputDecoration(
                             hintText: 'Rp 0',
                             hintStyle: TextStyle(color: Colors.grey[400]),
-                            prefixIcon: Icon(
-                              Icons.monetization_on,
-                              color: AppColors.primary,
-                            ),
+                            prefixIcon: Icon(Icons.monetization_on,
+                                color: AppColors.primary),
+                            labelText: 'Fee Amount',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: Colors.grey[300]!),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: AppColors.primary),
                             ),
                             filled: true,
                             fillColor: Colors.grey[50],
                           ),
                           validator: (value) {
-                            if (_hasFee && (value == null || value.isEmpty)) {
-                              return 'Please enter fee amount';
-                            }
-                            if (_hasFee &&
-                                double.tryParse(value!.replaceAll(',', '')) ==
-                                    null) {
-                              return 'Please enter valid fee amount';
+                            if (_hasFee) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter fee amount';
+                              }
+                              if (double.tryParse(
+                                      value.replaceAll(',', '')) ==
+                                  null) {
+                                return 'Please enter valid amount';
+                              }
                             }
                             return null;
                           },
                         ),
+                      ],
+                    ],
+                  ),
+                ),
 
-                      const SizedBox(height: 24),
+                // Memo Card
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
 
                       // Memo Section
                       _buildSectionTitle('Memo'),

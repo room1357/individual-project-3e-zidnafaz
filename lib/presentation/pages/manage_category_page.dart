@@ -3,6 +3,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/category_model.dart';
 import '../../data/category_income_data.dart';
 import '../../data/category_expenses_data.dart';
+import '../widgets/manage_category/category_list_card.dart';
+import '../widgets/manage_category/category_dialog.dart';
 
 class ManageCategoryPage extends StatefulWidget {
   final String? initialTab; // 'income' or 'expense'
@@ -49,404 +51,57 @@ class _ManageCategoryPageState extends State<ManageCategoryPage>
   }
 
   void _showAddCategoryDialog(bool isIncome) {
-    final nameController = TextEditingController();
-    IconData selectedIcon = Icons.category;
-    Color selectedColor = Colors.blue;
-
-    showDialog(
+    CategoryDialog.showAddCategoryDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Add ${isIncome ? 'Income' : 'Expense'} Category'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Select Icon:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableIcons.map((icon) {
-                    final isSelected = selectedIcon == icon;
-                    return InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          selectedIcon = icon;
-                        });
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          icon,
-                          color: isSelected ? Colors.white : Colors.grey[700],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-                const Text('Select Color:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableColors.map((color) {
-                    final isSelected = selectedColor == color;
-                    return InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          selectedColor = color;
-                        });
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(8),
-                          border: isSelected
-                              ? Border.all(color: Colors.black, width: 3)
-                              : null,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  final newCategory = Category(
-                    name: nameController.text,
-                    icon: selectedIcon,
-                    color: selectedColor,
-                  );
-                  setState(() {
-                    if (isIncome) {
-                      initialIncomeCategories.add(newCategory);
-                    } else {
-                      initialExpenseCategories.add(newCategory);
-                    }
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
+      isIncome: isIncome,
+      onAdd: (newCategory) {
+        setState(() {
+          if (isIncome) {
+            initialIncomeCategories.add(newCategory);
+          } else {
+            initialExpenseCategories.add(newCategory);
+          }
+        });
+      },
     );
   }
 
   void _showEditCategoryDialog(Category category, bool isIncome) {
-    final nameController = TextEditingController(text: category.name);
-    IconData selectedIcon = category.icon;
-    Color selectedColor = category.color;
-
-    showDialog(
+    CategoryDialog.showEditCategoryDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Edit ${isIncome ? 'Income' : 'Expense'} Category'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Select Icon:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableIcons.map((icon) {
-                    final isSelected = selectedIcon == icon;
-                    return InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          selectedIcon = icon;
-                        });
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          icon,
-                          color: isSelected ? Colors.white : Colors.grey[700],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-                const Text('Select Color:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableColors.map((color) {
-                    final isSelected = selectedColor == color;
-                    return InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          selectedColor = color;
-                        });
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(8),
-                          border: isSelected
-                              ? Border.all(color: Colors.black, width: 3)
-                              : null,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  final updatedCategory = Category(
-                    name: nameController.text,
-                    icon: selectedIcon,
-                    color: selectedColor,
-                  );
-                  setState(() {
-                    if (isIncome) {
-                      final index = initialIncomeCategories.indexWhere((c) => c.name == category.name);
-                      if (index != -1) {
-                        initialIncomeCategories[index] = updatedCategory;
-                      }
-                    } else {
-                      final index = initialExpenseCategories.indexWhere((c) => c.name == category.name);
-                      if (index != -1) {
-                        initialExpenseCategories[index] = updatedCategory;
-                      }
-                    }
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+      category: category,
+      isIncome: isIncome,
+      onUpdate: (updatedCategory) {
+        setState(() {
+          if (isIncome) {
+            final index = initialIncomeCategories.indexWhere((c) => c.name == category.name);
+            if (index != -1) {
+              initialIncomeCategories[index] = updatedCategory;
+            }
+          } else {
+            final index = initialExpenseCategories.indexWhere((c) => c.name == category.name);
+            if (index != -1) {
+              initialExpenseCategories[index] = updatedCategory;
+            }
+          }
+        });
+      },
     );
   }
 
   void _deleteCategory(Category category, bool isIncome) {
-    showDialog(
+    CategoryDialog.showDeleteCategoryDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: Text('Are you sure you want to delete "${category.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                if (isIncome) {
-                  initialIncomeCategories.removeWhere((c) => c.name == category.name);
-                } else {
-                  initialExpenseCategories.removeWhere((c) => c.name == category.name);
-                }
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryList(List<Category> categories, bool isIncome) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                '${isIncome ? 'Income' : 'Expense'} Categories',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-            
-            // Category Items
-            ...List.generate(categories.length, (index) {
-              final category = categories[index];
-              return Column(
-                children: [
-                  if (index > 0) Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-                  InkWell(
-                    onTap: () => _selectCategory(category, isIncome),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        children: [
-                          // Icon
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: category.color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              category.icon,
-                              color: category.color,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Category Name
-                          Expanded(
-                            child: Text(
-                              category.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          // Action Buttons
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                                onPressed: () => _showEditCategoryDialog(category, isIncome),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                onPressed: () => _deleteCategory(category, isIncome),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }),
-            
-            // Add New Category Button
-            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-            InkWell(
-              onTap: () => _showAddCategoryDialog(isIncome),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.add_circle,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Add New Category',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      category: category,
+      onDelete: () {
+        setState(() {
+          if (isIncome) {
+            initialIncomeCategories.removeWhere((c) => c.name == category.name);
+          } else {
+            initialExpenseCategories.removeWhere((c) => c.name == category.name);
+          }
+        });
+      },
     );
   }
 
@@ -550,8 +205,22 @@ class _ManageCategoryPageState extends State<ManageCategoryPage>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildCategoryList(initialIncomeCategories, true),
-                _buildCategoryList(initialExpenseCategories, false),
+                CategoryListCard(
+                  categories: initialIncomeCategories,
+                  isIncome: true,
+                  onSelectCategory: _selectCategory,
+                  onEditCategory: _showEditCategoryDialog,
+                  onDeleteCategory: _deleteCategory,
+                  onAddCategory: () => _showAddCategoryDialog(true),
+                ),
+                CategoryListCard(
+                  categories: initialExpenseCategories,
+                  isIncome: false,
+                  onSelectCategory: _selectCategory,
+                  onEditCategory: _showEditCategoryDialog,
+                  onDeleteCategory: _deleteCategory,
+                  onAddCategory: () => _showAddCategoryDialog(false),
+                ),
               ],
             ),
           ),
@@ -559,55 +228,4 @@ class _ManageCategoryPageState extends State<ManageCategoryPage>
       ),
     );
   }
-
-  // Available icons for categories
-  static final List<IconData> _availableIcons = [
-    Icons.category,
-    Icons.shopping_cart,
-    Icons.restaurant,
-    Icons.local_cafe,
-    Icons.directions_car,
-    Icons.local_gas_station,
-    Icons.home,
-    Icons.phone,
-    Icons.wifi,
-    Icons.electric_bolt,
-    Icons.water_drop,
-    Icons.school,
-    Icons.medical_services,
-    Icons.fitness_center,
-    Icons.movie,
-    Icons.music_note,
-    Icons.sports_esports,
-    Icons.card_giftcard,
-    Icons.favorite,
-    Icons.pets,
-    Icons.work,
-    Icons.account_balance,
-    Icons.savings,
-    Icons.attach_money,
-    Icons.trending_up,
-  ];
-
-  // Available colors for categories
-  static final List<Color> _availableColors = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-  ];
 }

@@ -66,6 +66,14 @@ class WalletService {
     }
   }
 
+  // Update entire wallet data (for editing wallet properties)
+  static void updateWalletData(String walletId, Wallet updatedWallet) {
+    final index = _wallets.indexWhere((wallet) => wallet.id == walletId);
+    if (index != -1) {
+      _wallets[index] = updatedWallet;
+    }
+  }
+
   // Add amount to wallet (for income)
   static void addToWallet(String walletId, double amount) {
     final wallet = getWalletById(walletId);

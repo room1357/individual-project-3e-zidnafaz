@@ -9,6 +9,7 @@ final List<Category> initialExpenseCategories = [
   Category(name: 'Kesehatan', icon: Icons.local_hospital, color: Colors.red),
   Category(name: 'Pendidikan', icon: Icons.school, color: Colors.teal),
   Category(name: 'Utilitas', icon: Icons.power, color: Colors.lightGreen),
+  Category(name: 'Adjustment', icon: Icons.tune, color: Colors.deepPurple), // For wallet balance adjustments
   Category(name: 'Lainnya', icon: Icons.more_horiz, color: Colors.deepPurpleAccent),
   Category(name: 'Semua', icon: Icons.all_inclusive, color: Colors.grey),
 ];

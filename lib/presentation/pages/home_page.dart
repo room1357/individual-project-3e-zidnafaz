@@ -174,14 +174,17 @@ class _HomePageState extends State<HomePage> {
                   initialData: store.currentIncomes,
                   builder: (context, incomeSnap) {
                     final incomes = incomeSnap.data ?? const <Income>[];
-                    // This month totals (like wallet_detail_page but for all wallets)
-                    final now = DateTime.now();
-                    final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month);
-                    final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month);
-                    final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
-                    final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
-                    WalletService.recalculateAllFromServices();
-                    final totalBalance = WalletService.getTotalBalance();
+                    return StreamBuilder<int>(
+                      stream: store.walletChanges$,
+                      builder: (context, walletSnap) {
+                        // This month totals (like wallet_detail_page but for all wallets)
+                        final now = DateTime.now();
+                        final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month);
+                        final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month);
+                        final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
+                        final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
+                        WalletService.recalculateAllFromServices();
+                        final totalBalance = WalletService.getTotalBalance();
                     final transactions = _buildTransactions(
                       incomes: incomes,
                       expenses: expenses,
@@ -208,6 +211,8 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
+                    );
+                      },
                     );
                   },
                 );

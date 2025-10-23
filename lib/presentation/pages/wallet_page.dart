@@ -55,36 +55,41 @@ class _WalletPageState extends State<WalletPage> {
                 return StreamBuilder<Object>(
                   stream: store.transfers$,
                   builder: (context, ___) {
-                    // Recalculate from services so balances reflect income-expense-transfer net from zero
-                    WalletService.recalculateAllFromServices();
-                    final wallets = WalletService.getAllWallets();
-                    final total = WalletService.getTotalBalance();
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TotalBalanceCard(
-                            amount: total,
-                            titleLeft: 'Wallets',
-                            subLabel: 'Total Balance',
-                            trailingIcon: Icons.account_balance_wallet_rounded,
+                    return StreamBuilder<Object>(
+                      stream: store.walletChanges$,
+                      builder: (context, ____) {
+                        // Recalculate from services so balances reflect income-expense-transfer net from zero
+                        WalletService.recalculateAllFromServices();
+                        final wallets = WalletService.getAllWallets();
+                        final total = WalletService.getTotalBalance();
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TotalBalanceCard(
+                                amount: total,
+                                titleLeft: 'Wallets',
+                                subLabel: 'Total Balance',
+                                trailingIcon: Icons.account_balance_wallet_rounded,
+                              ),
+                              const SizedBox(height: 16),
+                              WalletGrid(
+                                wallets: wallets,
+                                balances: {for (var w in wallets) w.id: w.balance},
+                                onWalletTap: (wallet) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => WalletDetailPage(wallet: wallet),
+                                    ),
+                                  );
+                                },
+                                onAddWallet: _onAddWallet,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          WalletGrid(
-                            wallets: wallets,
-                            balances: {for (var w in wallets) w.id: w.balance},
-                            onWalletTap: (wallet) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => WalletDetailPage(wallet: wallet),
-                                ),
-                              );
-                            },
-                            onAddWallet: _onAddWallet,
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
                 );

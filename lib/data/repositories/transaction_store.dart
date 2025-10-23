@@ -21,10 +21,12 @@ class TransactionStore implements TransactionRepository {
   late List<Expense> _expenses;
   late List<Income> _incomes;
   List<Transfer> _transfers = const <Transfer>[];
+  int _walletChangeCounter = 0; // Counter to trigger wallet updates
 
   final _expenseCtrl = StreamController<List<Expense>>.broadcast();
   final _incomeCtrl = StreamController<List<Income>>.broadcast();
   final _transferCtrl = StreamController<List<Transfer>>.broadcast();
+  final _walletChangeCtrl = StreamController<int>.broadcast();
 
   // Streams
   @override
@@ -33,6 +35,7 @@ class TransactionStore implements TransactionRepository {
   Stream<List<Income>> get incomes$ => _incomeCtrl.stream;
   @override
   Stream<List<Transfer>> get transfers$ => _transferCtrl.stream;
+  Stream<int> get walletChanges$ => _walletChangeCtrl.stream;
 
   // Current snapshots (for initialData/defaults)
   @override
@@ -120,10 +123,17 @@ class TransactionStore implements TransactionRepository {
     _transferCtrl.add(UnmodifiableListView(_transfers));
   }
 
+  // Method to notify wallet changes (when wallet is edited without transactions)
+  void notifyWalletChange() {
+    _walletChangeCounter++;
+    _walletChangeCtrl.add(_walletChangeCounter);
+  }
+
   @override
   void dispose() {
     _expenseCtrl.close();
     _incomeCtrl.close();
     _transferCtrl.close();
+    _walletChangeCtrl.close();
   }
 }

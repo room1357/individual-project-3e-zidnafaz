@@ -8,6 +8,7 @@ final List<Category> initialIncomeCategories = [
   Category(name: 'Investasi', icon: Icons.trending_up, color: Colors.teal),
   Category(name: 'Penjualan', icon: Icons.shopping_cart, color: Colors.blueGrey),
   Category(name: 'Hadiah', icon: Icons.redeem, color: Colors.amber),
+  Category(name: 'Adjustment', icon: Icons.tune, color: Colors.deepPurple), // For wallet balance adjustments
   Category(name: 'Lainnya', icon: Icons.more_horiz, color: Colors.blue),
   Category(name: 'Semua', icon: Icons.all_inclusive, color: Colors.grey),
 ];

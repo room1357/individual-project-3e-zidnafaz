@@ -9,6 +9,7 @@ import '../../data/repositories/transaction_store.dart';
 import '../../data/category_income_data.dart';
 import '../../data/category_expenses_data.dart';
 import '../../core/constants/app_colors.dart';
+import '../widgets/reusable/icon_color_constants.dart';
 
 class EditWalletPage extends StatefulWidget {
   final Wallet wallet;
@@ -34,33 +35,9 @@ class _EditWalletPageState extends State<EditWalletPage> {
   
   double _originalBalance = 0.0;
 
-  final List<Color> _availableColors = [
-    const Color(0xFF3DB2FF),
-    const Color(0xFFFFB830),
-    const Color(0xFF6BCB77),
-    const Color(0xFFFF6B6B),
-    const Color(0xFF9B59B6),
-    const Color(0xFF00C9A7),
-    const Color(0xFFFF6348),
-    const Color(0xFF4ECDC4),
-    Colors.blueGrey,
-    Colors.teal,
-    Colors.orange,
-    Colors.indigo,
-  ];
-
-  final List<IconData> _availableIcons = [
-    Icons.account_balance_wallet_rounded,
-    Icons.attach_money_rounded,
-    Icons.credit_card,
-    Icons.account_balance,
-    Icons.wallet,
-    Icons.payment,
-    Icons.savings,
-    Icons.monetization_on,
-    Icons.currency_exchange,
-    Icons.payments_outlined,
-  ];
+  // Use reusable constants
+  final List<Color> _availableColors = IconColorConstants.getColorsForWallet();
+  final List<IconData> _availableIcons = IconColorConstants.getIconsForWallet();
 
   @override
   void initState() {

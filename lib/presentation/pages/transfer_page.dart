@@ -74,6 +74,12 @@ class _TransferPageState extends State<TransferPage> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != _selectedTime) {
       setState(() {
@@ -392,7 +398,7 @@ class _TransferPageState extends State<TransferPage> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      _selectedTime.format(context),
+                                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
                                       style: const TextStyle(fontSize: 16),
                                     ),
                                   ],

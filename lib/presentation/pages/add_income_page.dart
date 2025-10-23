@@ -3,16 +3,21 @@ import 'package:intl/intl.dart';
 import '../../data/models/income_model.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/wallet_model.dart';
-import '../../data/category_income_data.dart';
 import '../../services/income_service.dart';
 import '../../services/wallet_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/transaction_store.dart';
 import 'add_expense_page.dart';
 import 'transfer_page.dart';
+import 'manage_category_page.dart';
 
 class AddIncomePage extends StatefulWidget {
-  const AddIncomePage({super.key});
+  final Category? preselectedCategory;
+  
+  const AddIncomePage({
+    super.key,
+    this.preselectedCategory,
+  });
 
   @override
   State<AddIncomePage> createState() => _AddIncomePageState();
@@ -32,6 +37,10 @@ class _AddIncomePageState extends State<AddIncomePage> {
   @override
   void initState() {
     super.initState();
+    // Set preselected category if provided
+    if (widget.preselectedCategory != null) {
+      _selectedCategory = widget.preselectedCategory;
+    }
     // Set default wallet to first available wallet
     final wallets = WalletService.getAllWallets();
     if (wallets.isNotEmpty) {
@@ -393,41 +402,79 @@ class _AddIncomePageState extends State<AddIncomePage> {
                       
                       // Category Section
                       _buildSectionTitle('Category'),
-                      DropdownButtonFormField<Category>(
-                        // value: _selectedCategory,
-                        decoration: InputDecoration(
-                          hintText: 'Select Category',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          prefixIcon: Icon(Icons.category, color: AppColors.primary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: AppColors.primary),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                        ),
-                        items: initialIncomeCategories
-                            .where((cat) => cat.name != 'Semua')
-                            .map((category) => DropdownMenuItem(
-                                  value: category,
-                                  child: Row(
-                                    children: [
-                                      Icon(category.icon, color: category.color, size: 20),
-                                      const SizedBox(width: 12),
-                                      Text(category.name),
-                                    ],
+                      InkWell(
+                        onTap: () async {
+                          final result = await Navigator.push<Map<String, dynamic>>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ManageCategoryPage(
+                                initialTab: 'income',
+                              ),
+                            ),
+                          );
+                          if (result != null) {
+                            final category = result['category'] as Category;
+                            final isIncome = result['isIncome'] as bool;
+                            
+                            // If user selected expense category while on income page, switch to expense page
+                            if (!isIncome) {
+                              // Navigate to expense page with selected category
+                              if (mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddExpensePage(
+                                      preselectedCategory: category,
+                                    ),
                                   ),
-                                ))
-                            .toList(),
-                        onChanged: (Category? value) {
-                          setState(() {
-                            _selectedCategory = value;
-                          });
+                                );
+                              }
+                            } else {
+                              setState(() {
+                                _selectedCategory = category;
+                              });
+                            }
+                          }
                         },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.category, color: AppColors.primary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _selectedCategory == null
+                                    ? Text(
+                                        'Select Category',
+                                        style: TextStyle(color: Colors.grey[400]),
+                                      )
+                                    : Row(
+                                        children: [
+                                          Icon(
+                                            _selectedCategory!.icon,
+                                            color: _selectedCategory!.color,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            _selectedCategory!.name,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
+                            ],
+                          ),
+                        ),
                       ),
                       
                       const SizedBox(height: 24),

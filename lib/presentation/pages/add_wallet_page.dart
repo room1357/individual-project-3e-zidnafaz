@@ -19,7 +19,6 @@ class _AddWalletPageState extends State<AddWalletPage> {
   WalletType _selectedType = WalletType.general;
   Color _selectedColor = const Color(0xFF3DB2FF);
   IconData _selectedIcon = Icons.account_balance_wallet_rounded;
-  String _selectedCurrency = 'IDR';
   bool _isExcluded = false;
   bool _hasAdminFee = false;
 
@@ -51,8 +50,6 @@ class _AddWalletPageState extends State<AddWalletPage> {
     Icons.payments_outlined,
   ];
 
-  final List<String> _currencies = ['IDR', 'USD', 'EUR', 'SGD', 'MYR'];
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -72,7 +69,6 @@ class _AddWalletPageState extends State<AddWalletPage> {
         color: _selectedColor,
         icon: _selectedIcon,
         type: _selectedType,
-        currency: _selectedCurrency,
         isExcluded: _isExcluded,
         hasAdminFee: _hasAdminFee,
         adminFee: _hasAdminFee
@@ -388,46 +384,6 @@ class _AddWalletPageState extends State<AddWalletPage> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Currency Section
-                _buildCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('Currency'),
-                      DropdownButtonFormField<String>(
-                        value: _selectedCurrency,
-                        decoration: InputDecoration(
-                          hintText: 'Select Currency',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          prefixIcon: Icon(Icons.monetization_on,
-                              color: AppColors.primary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppColors.primary),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                        ),
-                        items: _currencies
-                            .map((currency) => DropdownMenuItem(
-                                  value: currency,
-                                  child: Text(currency),
-                                ))
-                            .toList(),
-                        onChanged: (String? value) {
-                          if (value != null) {
-                            setState(() => _selectedCurrency = value);
-                          }
-                        },
                       ),
                     ],
                   ),

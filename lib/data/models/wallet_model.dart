@@ -14,7 +14,6 @@ class Wallet {
   final Color color;
   final IconData icon;
   final WalletType type;
-  final String currency;
   final bool isExcluded;
   final bool hasAdminFee;
   final double adminFee;
@@ -27,7 +26,6 @@ class Wallet {
     required this.color,
     required this.icon,
     this.type = WalletType.general,
-    this.currency = 'IDR',
     this.isExcluded = false,
     this.hasAdminFee = false,
     this.adminFee = 0.0,
@@ -40,7 +38,6 @@ class Wallet {
     Color? color,
     IconData? icon,
     WalletType? type,
-    String? currency,
     bool? isExcluded,
     bool? hasAdminFee,
     double? adminFee,
@@ -53,7 +50,6 @@ class Wallet {
         color: color ?? this.color,
         icon: icon ?? this.icon,
         type: type ?? this.type,
-        currency: currency ?? this.currency,
         isExcluded: isExcluded ?? this.isExcluded,
         hasAdminFee: hasAdminFee ?? this.hasAdminFee,
         adminFee: adminFee ?? this.adminFee,

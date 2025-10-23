@@ -314,63 +314,139 @@ class _ManageCategoryPageState extends State<ManageCategoryPage>
   }
 
   Widget _buildCategoryList(List<Category> categories, bool isIncome) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: categories.length + 1, // +1 for Add button
-      itemBuilder: (context, index) {
-        if (index == categories.length) {
-          // Add Category Button
-          return Card(
-            elevation: 0,
-            color: AppColors.primary.withOpacity(0.1),
-            child: ListTile(
-              leading: Icon(Icons.add_circle, color: AppColors.primary),
-              title: Text(
-                'Add New Category',
-                style: TextStyle(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${isIncome ? 'Income' : 'Expense'} Categories',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+            
+            // Category Items
+            ...List.generate(categories.length, (index) {
+              final category = categories[index];
+              return Column(
+                children: [
+                  if (index > 0) Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+                  InkWell(
+                    onTap: () => _selectCategory(category, isIncome),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          // Icon
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: category.color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              category.icon,
+                              color: category.color,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Category Name
+                          Expanded(
+                            child: Text(
+                              category.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          // Action Buttons
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                onPressed: () => _showEditCategoryDialog(category, isIncome),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                onPressed: () => _deleteCategory(category, isIncome),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+            
+            // Add New Category Button
+            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+            InkWell(
               onTap: () => _showAddCategoryDialog(isIncome),
-            ),
-          );
-        }
-
-        final category = categories[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: category.color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.add_circle,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Add New Category',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(category.icon, color: category.color),
             ),
-            title: Text(
-              category.name,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showEditCategoryDialog(category, isIncome),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteCategory(category, isIncome),
-                ),
-              ],
-            ),
-            onTap: () => _selectCategory(category, isIncome),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

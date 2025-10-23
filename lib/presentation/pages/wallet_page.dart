@@ -13,6 +13,7 @@ import 'statistics_page.dart';
 import 'wallet_detail_page.dart';
 import 'profile_page.dart';
 import 'add_expense_page.dart';
+import 'add_wallet_page.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
@@ -130,18 +131,17 @@ class _WalletPageState extends State<WalletPage> {
     );
   }  
 
-  void _onAddWallet() {
-    // Placeholder: add a dummy wallet quickly
-    setState(() {
-      final currentWallets = WalletService.getAllWallets();
-      final newWallet = Wallet(
-        id: 'w${currentWallets.length + 1}',
-        name: 'Wallet ${currentWallets.length + 1}',
-        balance: 0,
-        color: Colors.blueGrey,
-        icon: Icons.account_balance_wallet_rounded,
-      );
-      WalletService.addWallet(newWallet);
-    });
+  void _onAddWallet() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AddWalletPage(),
+      ),
+    );
+    
+    if (result != null && mounted) {
+      setState(() {
+        // Refresh the page
+      });
+    }
   }
 }

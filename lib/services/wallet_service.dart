@@ -14,6 +14,12 @@ class WalletService {
       balance: 0, // start from 0; will be adjusted via transactions
       color: Color(0xFF3DB2FF),
       icon: Icons.attach_money_rounded,
+      type: WalletType.general,
+      currency: 'IDR',
+      isExcluded: false,
+      hasAdminFee: false,
+      adminFee: 0.0,
+      initialBalance: 0.0,
     ),
     const Wallet(
       id: 'w2',
@@ -21,6 +27,12 @@ class WalletService {
       balance: 0, // start from 0
       color: Color(0xFFFFB830),
       icon: Icons.account_balance_wallet_rounded,
+      type: WalletType.eWallet,
+      currency: 'IDR',
+      isExcluded: false,
+      hasAdminFee: false,
+      adminFee: 0.0,
+      initialBalance: 0.0,
     ),
     const Wallet(
       id: 'w3',
@@ -28,6 +40,12 @@ class WalletService {
       balance: 0, // start from 0
       color: Color(0xFF3DB2FF),
       icon: Icons.account_balance_wallet_outlined,
+      type: WalletType.eWallet,
+      currency: 'IDR',
+      isExcluded: false,
+      hasAdminFee: false,
+      adminFee: 0.0,
+      initialBalance: 0.0,
     ),
   ];
 
@@ -89,16 +107,18 @@ class WalletService {
     return true;
   }
 
-  // Get total balance across all wallets
+  // Get total balance across all wallets (excluding wallets with isExcluded = true)
   static double getTotalBalance() {
-    return _wallets.fold(0.0, (sum, wallet) => sum + wallet.balance);
+    return _wallets
+        .where((wallet) => !wallet.isExcluded)
+        .fold(0.0, (sum, wallet) => sum + wallet.balance);
   }
 
   // Recalculate all wallet balances from current services data (income/expense/transfers)
-  // Assumes starting balance of 0 for each wallet, then applies net of transactions.
+  // Starts from initialBalance, then applies net of transactions.
   static void recalculateAllFromServices() {
-    // Initialize all to 0
-    final Map<String, double> totals = {for (final w in _wallets) w.id: 0.0};
+    // Initialize all to their initial balance
+    final Map<String, double> totals = {for (final w in _wallets) w.id: w.initialBalance};
     // Pull from services; if empty (initial dummy mode), fall back to dummy data
     final serviceIncomes = IncomeService.getAllIncomes();
     final serviceExpenses = ExpenseService.getAllExpenses();

@@ -10,6 +10,7 @@ import '../../data/category_income_data.dart';
 import '../../data/category_expenses_data.dart';
 import '../../core/constants/app_colors.dart';
 import '../widgets/reusable/icon_color_constants.dart';
+import '../widgets/reusable/icon_color_picker_dialog.dart';
 
 class EditWalletPage extends StatefulWidget {
   final Wallet wallet;
@@ -409,138 +410,140 @@ class _EditWalletPageState extends State<EditWalletPage> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
 
-                // Color & Icon Section
-                _buildCard(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Color Section
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('Color'),
-                            Container(
-                              height: 120,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                                itemCount: _availableColors.length,
-                                itemBuilder: (context, index) {
-                                  final color = _availableColors[index];
-                                  final isSelected = color == _selectedColor;
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedColor = color),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: color,
-                                        shape: BoxShape.circle,
-                                        border: isSelected
-                                            ? Border.all(
-                                                color: Colors.black, width: 3)
-                                            : null,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: color.withOpacity(0.4),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: isSelected
-                                          ? const Icon(Icons.check,
-                                              color: Colors.white, size: 16)
-                                          : null,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: 24),
 
-                      const SizedBox(width: 16),
-
-                      // Icon Section
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('Icon'),
-                            Container(
-                              height: 120,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                                itemCount: _availableIcons.length,
-                                itemBuilder: (context, index) {
-                                  final icon = _availableIcons[index];
-                                  final isSelected = icon == _selectedIcon;
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedIcon = icon),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.primary
-                                            : Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        icon,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.grey[600],
-                                        size: 24,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Exclude Toggle Section
-                _buildCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                      // Color & Icon Section with Dialog
                       Row(
+                        children: [
+                          // Color Picker Button
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionTitle('Color'),
+                                InkWell(
+                                  onTap: () async {
+                                    final color = await IconColorPickerDialog.showColorPicker(
+                                      context: context,
+                                      currentColor: _selectedColor,
+                                      customColors: _availableColors,
+                                    );
+                                    if (color != null) {
+                                      setState(() => _selectedColor = color);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: _selectedColor,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: _selectedColor.withOpacity(0.4),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Select Color',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(Icons.arrow_forward_ios, 
+                                            size: 16, color: Colors.grey[600]),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Icon Picker Button
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionTitle('Icon'),
+                                InkWell(
+                                  onTap: () async {
+                                    final icon = await IconColorPickerDialog.showIconPicker(
+                                      context: context,
+                                      currentIcon: _selectedIcon,
+                                      customIcons: _availableIcons,
+                                    );
+                                    if (icon != null) {
+                                      setState(() => _selectedIcon = icon);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            _selectedIcon,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Select Icon',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(Icons.arrow_forward_ios, 
+                                            size: 16, color: Colors.grey[600]),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                  const SizedBox(height: 24),
+
+                  // Exclude Toggle Section (now in same card)
+                  Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
@@ -575,15 +578,10 @@ class _EditWalletPageState extends State<EditWalletPage> {
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
 
-                // Admin Fee Toggle Section
-                _buildCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                      const SizedBox(height: 24),
+
+                      // Admin Fee Toggle Section (now in same card)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

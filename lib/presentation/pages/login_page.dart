@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../widgets/auth/custom_text_field.dart';
 import 'home_page.dart';
 import 'register_page.dart';
 
@@ -33,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              Image.asset('assets/logo/app_icon.png', height: 80),
+              Image.asset('assets/logo/new_app_icon.png', height: 80),
               const SizedBox(height: 16),
               const Text(
                 'Sign in to your account',
@@ -50,9 +51,9 @@ class _LoginPageState extends State<LoginPage> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 16, fontFamily: 'Poppins'),
               ),
               const SizedBox(height: 40),
-              _buildTextField(hintText: 'Enter Your Email', prefixIcon: Icons.email_outlined),
+              const CustomTextField(hintText: 'Enter Your Email', prefixIcon: Icons.email_outlined),
               const SizedBox(height: 20),
-              _buildTextField(hintText: 'Enter Your Password', prefixIcon: Icons.lock_outline, obscureText: true),
+              const CustomTextField(hintText: 'Enter Your Password', prefixIcon: Icons.lock_outline, obscureText: true),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,33 +113,6 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({required String hintText, required IconData prefixIcon, bool obscureText = false}) {
-    return TextField(
-      obscureText: obscureText,
-      style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins'),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Poppins'),
-        prefixIcon: Icon(prefixIcon, color: AppColors.primary.withOpacity(0.7)),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade200),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );

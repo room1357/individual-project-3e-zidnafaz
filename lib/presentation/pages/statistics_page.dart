@@ -2,19 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/date_utils.dart' as du;
 import '../../data/category_expenses_data.dart';
 import '../../data/category_income_data.dart';
-import '../../data/expense_data.dart';
-import '../../data/income_data.dart';
+// import '../../data/expense_data.dart';
+// import '../../data/income_data.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/expense_model.dart';
 import '../../data/models/income_model.dart';
+import '../../data/models/transfer_model.dart';
+import '../../data/repositories/transaction_store.dart';
 import '../widgets/app_bottom_nav.dart';
-import '../widgets/transaction_widgets.dart';
+import '../widgets/statistics/month_selector.dart';
+import '../widgets/statistics/mode_dropdown.dart';
+import '../widgets/statistics/donut_legend_card.dart';
+import '../widgets/statistics/category_chips.dart';
+import '../widgets/statistics/transaction_list.dart';
+import '../widgets/statistics/chart_segment.dart';
 import 'home_page.dart';
 import 'wallet_page.dart';
 import 'profile_page.dart';
+import 'add_expense_page.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -23,11 +30,9 @@ class StatisticsPage extends StatefulWidget {
   State<StatisticsPage> createState() => _StatisticsPageState();
 }
 
-enum StatMode { expense, income }
-
 class _StatisticsPageState extends State<StatisticsPage> {
-  final List<Expense> expenses = dummyExpenses;
-  final List<Income> incomes = dummyIncomes;
+  // Realtime store
+  final store = TransactionStore.instance;
   final Color primaryColor = AppColors.primary;
 
   StatMode mode = StatMode.expense;
@@ -41,6 +46,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     super.initState();
     selectedCategory = _allCategories.firstWhere((c) => c.name == 'Semua');
     searchCtrl.addListener(() => setState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) => store.bootstrap());
   }
 
   @override
@@ -54,10 +60,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
   List<Category> get _allCategories =>
       mode == StatMode.expense ? _expenseCategories : _incomeCategories;
 
-  String get _modeLabel => mode == StatMode.expense ? 'Expense' : 'Income';
-  IconData get _modeIcon =>
-      mode == StatMode.expense ? Icons.trending_down : Icons.trending_up;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,7 +69,18 @@ class _StatisticsPageState extends State<StatisticsPage> {
         foregroundColor: primaryColor,
         elevation: 0,
         titleSpacing: 20,
-        title: _buildModeDropdown(),
+        title: ModeDropdown(
+          mode: mode,
+          onModeChanged: (newMode) {
+            setState(() {
+              mode = newMode;
+              selectedCategory = _allCategories.firstWhere(
+                (c) => c.name == 'Semua',
+              );
+            });
+          },
+          modeBtnKey: _modeBtnKey,
+        ),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
           PopupMenuButton<String>(
@@ -81,26 +94,67 @@ class _StatisticsPageState extends State<StatisticsPage> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMonthSelector(),
-                const SizedBox(height: 12),
-                _buildDonutAndLegendCard(),
-                const SizedBox(height: 16),
-                _buildCategoryChips(),
-                const SizedBox(height: 16),
-                _buildTransactionList(),
-              ],
-            ),
-          ),
+        child: StreamBuilder<List<Expense>>(
+          stream: store.expenses$,
+          initialData: store.currentExpenses,
+          builder: (context, expenseSnap) {
+            final expenses = expenseSnap.data ?? const <Expense>[];
+            return StreamBuilder<List<Income>>(
+              stream: store.incomes$,
+              initialData: store.currentIncomes,
+              builder: (context, incomeSnap) {
+                final incomes = incomeSnap.data ?? const <Income>[];
+                return StreamBuilder<List<Transfer>>(
+                  stream: store.transfers$,
+                  initialData: store.currentTransfers,
+                  builder: (context, transferSnap) {
+                    final transfers = transferSnap.data ?? const <Transfer>[];
+
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            MonthSelector(
+                              selectedMonth: _selectedMonth,
+                              onChangeMonth: _changeMonth,
+                            ),
+                            const SizedBox(height: 12),
+                            DonutLegendCard(
+                              segments: _categorySegments(expenses, incomes),
+                              mode: mode,
+                            ),
+                            const SizedBox(height: 16),
+                            CategoryChips(
+                              categories: _allCategories,
+                              selectedCategory: selectedCategory,
+                              onCategorySelected: (cat) => setState(() => selectedCategory = cat),
+                            ),
+                            const SizedBox(height: 16),
+                            TransactionList(
+                              transactions: _filteredTransactions(expenses, incomes, transfers),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddExpensePage(),
+            ),
+          );
+        },
         backgroundColor: AppColors.primary,
         elevation: 4,
         shape: const CircleBorder(),
@@ -128,53 +182,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildMonthSelector() {
-    final now = DateTime.now();
-    final bool isCurrentMonth =
-        _selectedMonth.year == now.year && _selectedMonth.month == now.month;
-    String label = DateFormat('MMM yyyy', 'en_US').format(_selectedMonth);
-    // Capitalize properly (already), keep style consistent
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left_rounded),
-            color: primaryColor,
-            onPressed: () => _changeMonth(-1),
-            tooltip: 'Previous month',
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right_rounded),
-            color: isCurrentMonth ? Colors.grey : primaryColor,
-            onPressed: isCurrentMonth ? null : () => _changeMonth(1),
-            tooltip: 'Next month',
-          ),
-        ],
-      ),
-    );
-  }
-
   void _changeMonth(int delta) {
     final y = _selectedMonth.year;
     final m = _selectedMonth.month + delta;
@@ -182,354 +189,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
     setState(() => _selectedMonth = DateTime(newDate.year, newDate.month));
   }
 
-  Widget _buildModeDropdown() {
-    return GestureDetector(
-      key: _modeBtnKey,
-      onTap: () async {
-        final button =
-            _modeBtnKey.currentContext!.findRenderObject() as RenderBox;
-        final overlay =
-            Overlay.of(context).context.findRenderObject() as RenderBox;
-        final offset = button.localToGlobal(Offset.zero, ancestor: overlay);
-        final size = button.size;
-        final position = RelativeRect.fromLTRB(
-          offset.dx,
-          offset.dy + size.height,
-          overlay.size.width - (offset.dx + size.width),
-          overlay.size.height - (offset.dy + size.height),
-        );
-
-        final opposite =
-            mode == StatMode.expense ? StatMode.income : StatMode.expense;
-        final newMode = await showMenu<StatMode>(
-          context: context,
-          position: position,
-          elevation: 12,
-          color: Colors.white,
-          shadowColor: Colors.black.withOpacity(0.15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          constraints: BoxConstraints(
-            minWidth: size.width,
-            maxWidth: size.width,
-          ),
-          items: [
-            if (opposite == StatMode.expense)
-              PopupMenuItem(
-                value: StatMode.expense,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.trending_down, color: Colors.red),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Expense',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              PopupMenuItem(
-                value: StatMode.income,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.trending_up, color: Colors.green),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Income',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        );
-        if (newMode != null && newMode != mode) {
-          setState(() {
-            mode = newMode;
-            selectedCategory = _allCategories.firstWhere(
-              (c) => c.name == 'Semua',
-            );
-          });
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: primaryColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _modeIcon,
-              color:
-                  mode == StatMode.expense
-                      ? Colors.red[200]
-                      : Colors.green[200],
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _modeLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDonutAndLegendCard() {
-    final segments = _categorySegments();
-    final total = segments.fold<double>(0, (s, e) => s + e.value);
-    final top = [...segments]..sort((a, b) => b.value.compareTo(a.value));
-    final top3 = top.take(3).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: CustomPaint(
-                painter: _DonutPainter(segments: segments),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        NumberFormat.compactCurrency(
-                          locale: 'id_ID',
-                          symbol: 'Rp ',
-                        ).format(total),
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        _modeLabel,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final s in top3)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: s.color.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: s.color.withOpacity(0.7),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            '${total == 0 ? 0 : (s.value / total * 100).round()}%',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: s.color,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            s.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChips() {
-    final cats = List<Category>.from(_allCategories);
-    final idxAll = cats.indexWhere((c) => c.name.toLowerCase() == 'semua');
-    if (idxAll > 0) {
-      final allCat = cats.removeAt(idxAll);
-      cats.insert(0, allCat);
-    }
-    return SizedBox(
-      height: 44,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, i) {
-          final cat = cats[i];
-          final isSel = selectedCategory?.name == cat.name;
-          final isAll = cat.name.toLowerCase() == 'semua';
-          final Color bgColor =
-              isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[100]!);
-          final Color borderColor =
-              isSel ? (isAll ? primaryColor : cat.color) : (Colors.grey[300]!);
-          final Color iconColor = isSel ? Colors.white : Colors.black54;
-          final Color textColor = isSel ? Colors.white : Colors.black87;
-          return GestureDetector(
-            onTap: () => setState(() => selectedCategory = cat),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: borderColor, width: 1.5),
-              ),
-              child: Row(
-                children: [
-                  Icon(cat.icon, size: 18, color: iconColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    cat.name,
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemCount: cats.length,
-      ),
-    );
-  }
-
-  // Bar chart card removed as requested.
-
-  Widget _buildTransactionList() {
-    final tx = _filteredTransactions();
-    if (tx.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            'Tidak ada transaksi',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ),
-      );
-    }
-
-    // Sort by datetime DESC and group by day like HomePage
-    final txWithDate =
-        tx
-            .map((t) => {'data': t, 'dt': du.parseTransactionDateTime(t)})
-            .toList();
-    txWithDate.sort(
-      (a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime),
-    );
-
-    final Map<DateTime, List<Map<String, dynamic>>> groups = {};
-    for (final item in txWithDate) {
-      final dt = item['dt'] as DateTime;
-      final key = DateTime(dt.year, dt.month, dt.day);
-      groups.putIfAbsent(key, () => []);
-      groups[key]!.add(item['data'] as Map<String, dynamic>);
-    }
-    final dates = groups.keys.toList()..sort((a, b) => b.compareTo(a));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Transactions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: primaryColor,
-          ),
-        ),
-        const SizedBox(height: 12),
-        for (final date in dates) ...[
-          TransactionDayCard(
-            title: du.sectionTitleForDate(date),
-            items: groups[date]!,
-          ),
-          const SizedBox(height: 12),
-        ],
-      ],
-    );
-  }
-
-  List<_ChartSegment> _categorySegments() {
+  List<ChartSegment> _categorySegments(List<Expense> allExpenses, List<Income> allIncomes) {
     if (mode == StatMode.expense) {
-      final filtered = _filteredExpenses();
+      final filtered = _filteredExpenses(allExpenses);
       final Map<String, double> byCat = {};
       for (final e in filtered) {
         byCat[e.category.name] = (byCat[e.category.name] ?? 0) + e.amount;
@@ -537,7 +199,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
       return _expenseCategories
           .where((c) => c.name != 'Semua')
           .map(
-            (c) => _ChartSegment(
+            (c) => ChartSegment(
               label: c.name,
               value: byCat[c.name] ?? 0,
               color: c.color,
@@ -547,7 +209,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           .where((s) => s.value > 0)
           .toList();
     } else {
-      final filtered = _filteredIncomes();
+      final filtered = _filteredIncomes(allIncomes);
       final Map<String, double> byCat = {};
       for (final i in filtered) {
         byCat[i.category.name] = (byCat[i.category.name] ?? 0) + i.amount;
@@ -555,7 +217,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
       return _incomeCategories
           .where((c) => c.name != 'Semua')
           .map(
-            (c) => _ChartSegment(
+            (c) => ChartSegment(
               label: c.name,
               value: byCat[c.name] ?? 0,
               color: c.color,
@@ -567,11 +229,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     }
   }
 
-  // Weekly bucket helpers removed.
-
-  // Week-over-week percentage removed.
-
-  List<Expense> _filteredExpenses({bool ignoreWeekWindow = false}) {
+  List<Expense> _filteredExpenses(List<Expense> expenses, {bool ignoreWeekWindow = false}) {
     final sc = selectedCategory;
     return expenses.where((e) {
       final searchLower = searchCtrl.text.toLowerCase();
@@ -588,7 +246,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     }).toList();
   }
 
-  List<Income> _filteredIncomes({bool ignoreWeekWindow = false}) {
+  List<Income> _filteredIncomes(List<Income> incomes, {bool ignoreWeekWindow = false}) {
     final sc = selectedCategory;
     return incomes.where((i) {
       final searchLower = searchCtrl.text.toLowerCase();
@@ -605,105 +263,94 @@ class _StatisticsPageState extends State<StatisticsPage> {
     }).toList();
   }
 
-  List<Map<String, dynamic>> _filteredTransactions() {
+  List<Map<String, dynamic>> _filteredTransactions(
+    List<Expense> expenses,
+    List<Income> incomes,
+    List<Transfer> transfers,
+  ) {
+    final List<Map<String, dynamic>> rows = [];
+    final sc = selectedCategory;
+    final searchLower = searchCtrl.text.toLowerCase();
+    final bool includeTransfers = sc == null || sc.name == 'Semua';
+
     if (mode == StatMode.expense) {
-      return _filteredExpenses(ignoreWeekWindow: true)
-          .map(
-            (e) => {
-              'title': e.title,
-              'date': DateFormat('EEE, dd MMM', 'en_US').format(e.date),
-              'time': DateFormat('HH:mm').format(e.date),
-              'amount': -e.amount,
-              'icon': e.category.icon,
-              'color': e.category.color,
-              'walletId': e.walletId,
-            },
-          )
-          .toList();
-    } else {
-      return _filteredIncomes(ignoreWeekWindow: true)
-          .map(
-            (i) => {
-              'title': i.title,
-              'date': DateFormat('EEE, dd MMM', 'en_US').format(i.date),
-              'time': DateFormat('HH:mm').format(i.date),
-              'amount': i.amount,
-              'icon': i.category.icon,
-              'color': i.category.color,
-              'walletId': i.walletId,
-            },
-          )
-          .toList();
-    }
-  }
-
-  // Week range label removed.
-}
-
-class _ChartSegment {
-  final String label;
-  final double value;
-  final Color color;
-  final IconData icon;
-  _ChartSegment({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-}
-
-// Weekly bucket model removed.
-
-class _DonutPainter extends CustomPainter {
-  final List<_ChartSegment> segments;
-  _DonutPainter({required this.segments});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final center = rect.center;
-    final radius = size.shortestSide / 2;
-
-    final total = segments.fold<double>(0, (s, e) => s + e.value);
-    double start = -90 * 3.1415926535 / 180; // start from top
-    final stroke = radius * 0.32;
-    final paint =
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..strokeCap = StrokeCap.butt;
-
-    if (total == 0) {
-      paint.color = Colors.grey[200]!;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius * 0.8),
-        0,
-        6.283,
-        false,
-        paint,
+      // Expenses
+      rows.addAll(
+        _filteredExpenses(expenses, ignoreWeekWindow: true).map(
+          (e) => {
+            'title': e.title,
+            'date': DateFormat('EEE, dd MMM', 'en_US').format(e.date),
+            'time': DateFormat('HH:mm').format(e.date),
+            'amount': -e.amount,
+            'icon': e.category.icon,
+            'color': e.category.color,
+            'walletId': e.walletId,
+          },
+        ),
       );
-    } else {
-      for (final s in segments) {
-        final sweep = (s.value / total) * 6.28318530718;
-        paint.color = s.color.withOpacity(0.9);
-        canvas.drawArc(
-          Rect.fromCircle(center: center, radius: radius * 0.8),
-          start,
-          sweep,
-          false,
-          paint,
+
+      // Outgoing transfers as expense-like
+      if (includeTransfers) {
+        final month = _selectedMonth.month;
+        final year = _selectedMonth.year;
+        rows.addAll(
+          transfers.where((t) {
+            final matchesMonth = t.date.year == year && t.date.month == month;
+            final matchesSearch = searchLower.isEmpty ||
+                t.description.toLowerCase().contains(searchLower) ||
+                t.memo.toLowerCase().contains(searchLower);
+            return matchesMonth && matchesSearch;
+          }).map((t) => {
+                'title': 'Transfer to',
+                'date': DateFormat('EEE, dd MMM', 'en_US').format(t.date),
+                'time': DateFormat('HH:mm').format(t.date),
+                'amount': -t.amount,
+                'icon': Icons.swap_horiz,
+                'color': Colors.blueGrey,
+                'walletId': t.fromWalletId,
+              }),
         );
-        start += sweep;
+      }
+    } else {
+      // Incomes
+      rows.addAll(
+        _filteredIncomes(incomes, ignoreWeekWindow: true).map(
+          (i) => {
+            'title': i.title,
+            'date': DateFormat('EEE, dd MMM', 'en_US').format(i.date),
+            'time': DateFormat('HH:mm').format(i.date),
+            'amount': i.amount,
+            'icon': i.category.icon,
+            'color': i.category.color,
+            'walletId': i.walletId,
+          },
+        ),
+      );
+
+      // Incoming transfers as income-like
+      if (includeTransfers) {
+        final month = _selectedMonth.month;
+        final year = _selectedMonth.year;
+        rows.addAll(
+          transfers.where((t) {
+            final matchesMonth = t.date.year == year && t.date.month == month;
+            final matchesSearch = searchLower.isEmpty ||
+                t.description.toLowerCase().contains(searchLower) ||
+                t.memo.toLowerCase().contains(searchLower);
+            return matchesMonth && matchesSearch;
+          }).map((t) => {
+                'title': 'Transfer from',
+                'date': DateFormat('EEE, dd MMM', 'en_US').format(t.date),
+                'time': DateFormat('HH:mm').format(t.date),
+                'amount': t.amount,
+                'icon': Icons.swap_horiz,
+                'color': Colors.blueGrey,
+                'walletId': t.toWalletId,
+              }),
+        );
       }
     }
 
-    final innerPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius * 0.55, innerPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DonutPainter oldDelegate) {
-    return oldDelegate.segments != segments;
+    return rows;
   }
 }

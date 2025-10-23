@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/wallet_data.dart';
+import '../../services/wallet_service.dart';
 
 class TransactionRow extends StatelessWidget {
   final Map<String, dynamic> transaction;
@@ -11,9 +11,11 @@ class TransactionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? type = transaction['type'] as String?;
     final num amount = (transaction['amount'] ?? 0) as num;
     final bool isIncome = amount > 0;
-    final String sign = amount > 0 ? '+' : (amount < 0 ? '-' : '');
+    final bool isTransfer = type == 'transfer';
+    final String sign = isTransfer ? '' : (amount > 0 ? '+' : (amount < 0 ? '-' : ''));
     final String formattedAmount = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp. ',
@@ -25,12 +27,12 @@ class TransactionRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (transaction['color'] as Color).withOpacity(0.1),
+            color: (transaction['color'] as Color).withOpacity(isTransfer ? 0.06 : 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             transaction['icon'] as IconData,
-            color: transaction['color'] as Color,
+            color: isTransfer ? Colors.blueGrey : transaction['color'] as Color,
             size: 20,
           ),
         ),
@@ -63,7 +65,9 @@ class TransactionRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isIncome ? Colors.green : Colors.red,
+                color: isTransfer
+                    ? Colors.blueGrey
+                    : (isIncome ? Colors.green : Colors.red),
               ),
             ),
             const SizedBox(height: 2),
@@ -85,11 +89,11 @@ class TransactionRow extends StatelessWidget {
     if (explicit != null && explicit.trim().isNotEmpty) {
       walletName = explicit.trim();
     } else {
-      // Fallback: use walletId to resolve name from dummyWallets
+      // Fallback: use walletId to resolve name from WalletService
       final String? wid = tx['walletId'] as String?;
       if (wid != null) {
-        final match = dummyWallets.where((w) => w.id == wid);
-        if (match.isNotEmpty) walletName = match.first.name;
+        final wallet = WalletService.getWalletById(wid);
+        if (wallet != null) walletName = wallet.name;
       }
     }
 

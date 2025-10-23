@@ -8,6 +8,7 @@ class Income {
   final DateTime date;
   final String description;
   final String? walletId;
+  final String memo;
 
   Income({
     required this.id,
@@ -17,6 +18,7 @@ class Income {
     required this.date,
     required this.description,
     this.walletId,
+    this.memo = '',
   });
 
   String get formattedAmount => 'Rp ${amount.toStringAsFixed(0)}';

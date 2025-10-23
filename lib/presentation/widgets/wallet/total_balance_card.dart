@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../../core/constants/app_colors.dart';
 
 class TotalBalanceCard extends StatelessWidget {
   final double amount;
@@ -22,7 +22,6 @@ class TotalBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EdgeInsets padding = compact ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
-    final double titleFontSize = compact ? 16 : 18;
     final double amountFontSize = compact ? 24 : 32;
     final double subLabelFontSize = compact ? 12 : 14;
     final BorderRadius radius = BorderRadius.circular(compact ? 16 : 20);
@@ -45,26 +44,11 @@ class TotalBalanceCard extends StatelessWidget {
         boxShadow: [shadow],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                titleLeft,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (trailingIcon != null)
-                Icon(trailingIcon, color: Colors.white.withOpacity(0.8)),
-            ],
-          ),
-          SizedBox(height: compact ? 8 : 12),
           FittedBox(
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.center,
             fit: BoxFit.scaleDown,
             child: Text(
               NumberFormat.currency(
@@ -73,6 +57,7 @@ class TotalBalanceCard extends StatelessWidget {
                 decimalDigits: 0,
               ).format(amount),
               maxLines: 1,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: amountFontSize,
@@ -80,8 +65,10 @@ class TotalBalanceCard extends StatelessWidget {
               ),
             ),
           ),
+          SizedBox(height: compact ? 6 : 8),
           Text(
             subLabel,
+            textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70, fontSize: subLabelFontSize),
           ),
         ],

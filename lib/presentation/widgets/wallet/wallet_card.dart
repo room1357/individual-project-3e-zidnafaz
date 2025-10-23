@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../data/models/wallet_model.dart';
+import '../../../data/models/wallet_model.dart';
 
 class WalletCard extends StatelessWidget {
   final Wallet wallet;

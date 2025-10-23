@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/wallet_model.dart';
-import '../../data/wallet_data.dart';
-import '../../data/expense_data.dart';
-import '../../data/income_data.dart';
-import '../../data/models/expense_model.dart';
-import '../../data/models/income_model.dart';
-import '../../core/utils/wallet_utils.dart';
+import '../../services/wallet_service.dart';
+import '../../data/repositories/transaction_store.dart';
+
 import '../widgets/app_bottom_nav.dart';
-import '../widgets/wallet_card.dart';
-import '../widgets/total_balance_card.dart';
+import '../widgets/wallet/total_balance_card.dart';
+import '../widgets/wallet/wallet_grid.dart';
 import 'home_page.dart';
 import 'statistics_page.dart';
 import 'wallet_detail_page.dart';
 import 'profile_page.dart';
+import 'add_expense_page.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
@@ -24,17 +22,11 @@ class WalletPage extends StatefulWidget {
 }
 
 class _WalletPageState extends State<WalletPage> {
-  // Start with dummy; later this can be state-managed
-  final List<Wallet> wallets = List.of(dummyWallets);
-  final List<Expense> expenses = dummyExpenses;
-  final List<Income> incomes = dummyIncomes;
+  final store = TransactionStore.instance;
   int _currentIndex = 2;
 
   @override
   Widget build(BuildContext context) {
-  // Effective balances = initial balances +/- transactions tagged with walletId
-  final balances = computeWalletBalances(wallets: wallets, incomes: incomes, expenses: expenses);
-  final total = balances.values.fold<double>(0, (s, v) => s + v);
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -53,25 +45,62 @@ class _WalletPageState extends State<WalletPage> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TotalBalanceCard(
-                amount: total,
-                titleLeft: 'Wallets',
-                subLabel: 'Total Balance',
-                trailingIcon: Icons.account_balance_wallet_rounded,
-              ),
-              const SizedBox(height: 16),
-              _buildGrid(balances),
-            ],
-          ),
+        child: StreamBuilder<Object>(
+          stream: store.expenses$,
+          builder: (context, _) {
+            return StreamBuilder<Object>(
+              stream: store.incomes$,
+              builder: (context, __) {
+                return StreamBuilder<Object>(
+                  stream: store.transfers$,
+                  builder: (context, ___) {
+                    // Recalculate from services so balances reflect income-expense-transfer net from zero
+                    WalletService.recalculateAllFromServices();
+                    final wallets = WalletService.getAllWallets();
+                    final total = WalletService.getTotalBalance();
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TotalBalanceCard(
+                            amount: total,
+                            titleLeft: 'Wallets',
+                            subLabel: 'Total Balance',
+                            trailingIcon: Icons.account_balance_wallet_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          WalletGrid(
+                            wallets: wallets,
+                            balances: {for (var w in wallets) w.id: w.balance},
+                            onWalletTap: (wallet) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => WalletDetailPage(wallet: wallet),
+                                ),
+                              );
+                            },
+                            onAddWallet: _onAddWallet,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _onAddWallet,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddExpensePage(),
+            ),
+          );
+        },
         backgroundColor: AppColors.primary,
         elevation: 4,
         shape: const CircleBorder(),
@@ -101,62 +130,18 @@ class _WalletPageState extends State<WalletPage> {
     );
   }  
 
-  Widget _buildGrid(Map<String, double> balances) {
-    final tiles = <Widget>[
-      for (final w in wallets)
-        WalletCard(
-          wallet: w.copyWith(balance: balances[w.id] ?? w.balance),
-          onTap: () {
-            final effective = w.copyWith(balance: balances[w.id] ?? w.balance);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => WalletDetailPage(wallet: effective),
-              ),
-            );
-          },
-        ),
-      _buildAddTile(),
-    ];
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.6,
-      ),
-      itemCount: tiles.length,
-      itemBuilder: (_, i) => tiles[i],
-    );
-  }
-
-  Widget _buildAddTile() {
-    return InkWell(
-      onTap: _onAddWallet,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Center(
-          child: Icon(Icons.add, size: 36, color: Colors.white),
-        ),
-      ),
-    );
-  }
-
   void _onAddWallet() {
     // Placeholder: add a dummy wallet quickly
     setState(() {
-      wallets.add(Wallet(
-        id: 'w${wallets.length + 1}',
-        name: 'Wallet ${wallets.length + 1}',
+      final currentWallets = WalletService.getAllWallets();
+      final newWallet = Wallet(
+        id: 'w${currentWallets.length + 1}',
+        name: 'Wallet ${currentWallets.length + 1}',
         balance: 0,
         color: Colors.blueGrey,
         icon: Icons.account_balance_wallet_rounded,
-      ));
+      );
+      WalletService.addWallet(newWallet);
     });
   }
 }

@@ -1,7 +1,41 @@
 import '../data/models/expense_model.dart';
 
+class ExpenseService {
+  static final List<Expense> _expenses = [];
+  
+  // Get all expenses
+  static List<Expense> getAllExpenses() => List.from(_expenses);
+  
+  // Add new expense
+  static void addExpense(Expense expense) {
+    _expenses.add(expense);
+  }
+  
+  // Update expense
+  static void updateExpense(String id, Expense updatedExpense) {
+    final index = _expenses.indexWhere((expense) => expense.id == id);
+    if (index != -1) {
+      _expenses[index] = updatedExpense;
+    }
+  }
+  
+  // Delete expense
+  static void deleteExpense(String id) {
+    _expenses.removeWhere((expense) => expense.id == id);
+  }
+  
+  // Get expense by ID
+  static Expense? getExpenseById(String id) {
+    try {
+      return _expenses.firstWhere((expense) => expense.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
 class ExpenseManager {
-  static List<Expense> expenses = [/* data expenses */];
+  static List<Expense> expenses = ExpenseService.getAllExpenses();
 
   // 1. Mendapatkan total pengeluaran per kategori
   static Map<String, double> getTotalByCategory(List<Expense> expenses) {

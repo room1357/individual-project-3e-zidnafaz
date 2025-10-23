@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/date_utils.dart';
-import '../../data/expense_data.dart';
-import '../../data/income_data.dart';
+// import '../../data/expense_data.dart';
+// import '../../data/income_data.dart';
 import '../../data/models/expense_model.dart';
 import '../../data/models/income_model.dart';
+import '../../data/models/transfer_model.dart';
+import '../../data/repositories/transaction_store.dart';
+import '../../services/wallet_service.dart';
 import '../widgets/app_bottom_nav.dart';
-import '../widgets/transaction_widgets.dart';
+import '../widgets/home/total_balance_home_card.dart';
+import '../widgets/reusable/stat_card.dart';
+import '../widgets/home/activity_section.dart';
 import 'statistics_page.dart';
 import '../../trial_screens/expense_list_screen.dart';
 import '../../trial_screens/advance_expense_list_screen.dart';
 import '../../trial_screens/looping_screen.dart';
 import 'wallet_page.dart';
 import 'profile_page.dart';
+import 'add_expense_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,17 +31,20 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  // Menggunakan data terpusat
-  final List<Expense> expenses = dummyExpenses;
-  final List<Income> incomes = dummyIncomes;
+  // Realtime store
+  final store = TransactionStore.instance;
 
-  List<Map<String, dynamic>> get transactions {
+  List<Map<String, dynamic>> _buildTransactions({
+    required List<Income> incomes,
+    required List<Expense> expenses,
+    required List<Transfer> transfers,
+  }) {
     final incomeTx = incomes.map(
       (i) => {
         'title': i.title,
         'date': DateFormat('EEE, dd MMM', 'en_US').format(i.date),
         'time': DateFormat('HH:mm').format(i.date),
-        'amount': i.amount, // income positif
+        'amount': i.amount,
         'icon': i.category.icon,
         'color': i.category.color,
         'walletId': i.walletId,
@@ -47,18 +55,46 @@ class _HomePageState extends State<HomePage> {
         'title': e.title,
         'date': DateFormat('EEE, dd MMM', 'en_US').format(e.date),
         'time': DateFormat('HH:mm').format(e.date),
-        'amount': -e.amount, // expense negatif
+        'amount': -e.amount,
         'icon': e.category.icon,
         'color': e.category.color,
         'walletId': e.walletId,
       },
     );
-    return [...incomeTx, ...expenseTx].toList();
+
+    // Transfer as a single entry: walletName formatted as "[from] -> [to]"
+    final transferTx = transfers.map((t) {
+      final dateStr = DateFormat('EEE, dd MMM', 'en_US').format(t.date);
+      final timeStr = DateFormat('HH:mm').format(t.date);
+      final from = WalletService.getWalletById(t.fromWalletId)?.name ?? t.fromWalletId;
+      final to = WalletService.getWalletById(t.toWalletId)?.name ?? t.toWalletId;
+      return {
+        'type': 'transfer',
+        'title': t.description,
+        'date': dateStr,
+        'time': timeStr,
+        'amount': t.amount,
+        'icon': Icons.swap_horiz,
+        'color': Colors.blueGrey,
+        'walletName': '$from -> $to',
+        'fromWalletId': t.fromWalletId,
+        'toWalletId': t.toWalletId,
+      };
+    });
+
+    return [...incomeTx, ...expenseTx, ...transferTx].toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure initial emission after first frame so StreamBuilders get data
+    WidgetsBinding.instance.addPostFrameCallback((_) => store.bootstrap());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+  return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         titleSpacing: 20,
@@ -123,30 +159,72 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTotalBalanceCard(),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(child: _buildIncomeCard()),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildExpenseCard()),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                _buildActivitySection(),
-              ],
-            ),
-          ),
+        child: StreamBuilder<List<Transfer>>(
+          stream: store.transfers$,
+          initialData: store.currentTransfers,
+          builder: (context, transferSnap) {
+            final transfers = transferSnap.data ?? const <Transfer>[];
+            return StreamBuilder<List<Expense>>(
+              stream: store.expenses$,
+              initialData: store.currentExpenses,
+              builder: (context, expenseSnap) {
+                final expenses = expenseSnap.data ?? const <Expense>[];
+                return StreamBuilder<List<Income>>(
+                  stream: store.incomes$,
+                  initialData: store.currentIncomes,
+                  builder: (context, incomeSnap) {
+                    final incomes = incomeSnap.data ?? const <Income>[];
+                    // This month totals (like wallet_detail_page but for all wallets)
+                    final now = DateTime.now();
+                    final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month);
+                    final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month);
+                    final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
+                    final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
+                    WalletService.recalculateAllFromServices();
+                    final totalBalance = WalletService.getTotalBalance();
+                    final transactions = _buildTransactions(
+                      incomes: incomes,
+                      expenses: expenses,
+                      transfers: transfers,
+                    );
+
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TotalBalanceHomeCard(totalBalance: totalBalance),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(child: StatCard(label: 'Income', amount: totalIncome, color: const Color(0xFF66D4CC), icon: Icons.trending_up)),
+                                const SizedBox(width: 16),
+                                Expanded(child: StatCard(label: 'Expense', amount: totalExpense, color: const Color(0xFFF28080), icon: Icons.trending_down)),
+                              ],
+                            ),
+                            const SizedBox(height: 30),
+                            ActivitySection(transactions: transactions),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddExpensePage(),
+            ),
+          );
+        },
         backgroundColor: AppColors.primary,
         elevation: 4,
         shape: const CircleBorder(),
@@ -173,215 +251,6 @@ class _HomePageState extends State<HomePage> {
           }
         },
       ),
-    );
-  }
-
-  Widget _buildTotalBalanceCard() {
-    final totalIncome = incomes.fold(0.0, (sum, item) => sum + item.amount);
-    final totalExpense = expenses.fold(0.0, (sum, item) => sum + item.amount);
-    final totalBalance = totalIncome - totalExpense;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Hey, Jacob!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Icon(
-                Icons.notifications_outlined,
-                color: Colors.white.withOpacity(0.8),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              NumberFormat.currency(
-                locale: 'id_ID',
-                symbol: 'Rp ',
-                decimalDigits: 0,
-              ).format(totalBalance),
-              maxLines: 1,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const Text(
-            'Total Balance',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIncomeCard() {
-    final totalIncome = incomes.fold(0.0, (sum, item) => sum + item.amount);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF66D4CC),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Text(
-                'Income',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.trending_up, color: Colors.white, size: 20),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              NumberFormat.currency(
-                locale: 'id_ID',
-                symbol: 'Rp ',
-                decimalDigits: 0,
-              ).format(totalIncome),
-              maxLines: 1,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Percentage removed as requested.
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpenseCard() {
-    final totalExpense = expenses.fold(0.0, (sum, item) => sum + item.amount);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF28080),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Text(
-                'Expense',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.trending_down, color: Colors.white, size: 20),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              NumberFormat.currency(
-                locale: 'id_ID',
-                symbol: 'Rp ',
-                decimalDigits: 0,
-              ).format(totalExpense),
-              maxLines: 1,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Percentage removed as requested.
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivitySection() {
-    final txWithDate =
-        transactions.map((t) => {'data': t, 'dt': parseTransactionDateTime(t)}).toList();
-
-    txWithDate.sort((a, b) => (b['dt'] as DateTime).compareTo(a['dt'] as DateTime));
-
-    final Map<DateTime, List<Map<String, dynamic>>> groups = {};
-    for (final item in txWithDate) {
-      final dt = item['dt'] as DateTime;
-      final key = DateTime(dt.year, dt.month, dt.day);
-      groups.putIfAbsent(key, () => []);
-      groups[key]!.add(item['data'] as Map<String, dynamic>);
-    }
-
-    final dates = groups.keys.toList()..sort((a, b) => b.compareTo(a));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent Transactions',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        for (final date in dates) ...[
-          TransactionDayCard(
-            title: sectionTitleForDate(date),
-            items: groups[date]!,
-          ),
-          const SizedBox(height: 12),
-        ],
-      ],
     );
   }
 }

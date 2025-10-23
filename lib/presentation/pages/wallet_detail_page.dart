@@ -3,35 +3,31 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart';
-import '../../data/expense_data.dart';
-import '../../data/income_data.dart';
+// import '../../data/expense_data.dart';
+// import '../../data/income_data.dart';
 import '../../data/models/expense_model.dart';
 import '../../data/models/income_model.dart';
 import '../../data/models/wallet_model.dart';
+import '../../data/models/transfer_model.dart';
+import '../../data/repositories/transaction_store.dart';
+import '../../services/wallet_service.dart';
 import '../widgets/transaction_widgets.dart';
-import '../widgets/total_balance_card.dart';
+import '../widgets/wallet/total_balance_card.dart';
+import '../widgets/reusable/stat_card.dart';
 
 class WalletDetailPage extends StatelessWidget {
   final Wallet wallet;
   const WalletDetailPage({super.key, required this.wallet});
 
-  List<Income> _walletIncomes() => dummyIncomes.where((i) => i.walletId == wallet.id).toList();
-  List<Expense> _walletExpenses() => dummyExpenses.where((e) => e.walletId == wallet.id).toList();
+  List<Income> _walletIncomes(List<Income> incomes) => incomes.where((i) => i.walletId == wallet.id).toList();
+  List<Expense> _walletExpenses(List<Expense> expenses) => expenses.where((e) => e.walletId == wallet.id).toList();
+  List<Transfer> _walletTransfers(List<Transfer> transfers) => transfers
+      .where((t) => t.fromWalletId == wallet.id || t.toWalletId == wallet.id)
+      .toList();
 
   @override
   Widget build(BuildContext context) {
-    final incomes = _walletIncomes();
-    final expenses = _walletExpenses();
-    // Filter for current month to match 'This month' label
-    final now = DateTime.now();
-    final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month).toList();
-    final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month).toList();
-    final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
-    final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
-
-    // wallet.balance is already the effective balance on the card if passed from WalletPage.
-    final effectiveBalance = wallet.balance;
-
+    final store = TransactionStore.instance;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -43,73 +39,72 @@ class WalletDetailPage extends StatelessWidget {
         centerTitle: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TotalBalanceCard(
-                amount: effectiveBalance,
-                titleLeft: wallet.name,
-                subLabel: 'Current Balance',
-                trailingIcon: wallet.icon,
-                compact: true,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildStatCard('Income', totalIncome, const Color(0xFF66D4CC), Icons.trending_up)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildStatCard('Expense', totalExpense, const Color(0xFFF28080), Icons.trending_down)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildTransactionSection(incomes, expenses),
-            ],
-          ),
+        child: StreamBuilder<List<Transfer>>(
+          stream: store.transfers$,
+          initialData: store.currentTransfers,
+          builder: (context, transferSnap) {
+            final transfers = _walletTransfers(transferSnap.data ?? const <Transfer>[]);
+            return StreamBuilder<List<Expense>>(
+              stream: store.expenses$,
+              initialData: store.currentExpenses,
+              builder: (context, expenseSnap) {
+                final expenses = _walletExpenses(expenseSnap.data ?? const <Expense>[]);
+                return StreamBuilder<List<Income>>(
+                  stream: store.incomes$,
+                  initialData: store.currentIncomes,
+                  builder: (context, incomeSnap) {
+                    final incomes = _walletIncomes(incomeSnap.data ?? const <Income>[]);
+
+                    // Stats for this month
+                    final now = DateTime.now();
+                    final incomesThisMonth = incomes.where((i) => i.date.year == now.year && i.date.month == now.month).toList();
+                    final expensesThisMonth = expenses.where((e) => e.date.year == now.year && e.date.month == now.month).toList();
+                    final totalIncome = incomesThisMonth.fold<double>(0, (s, i) => s + i.amount);
+                    final totalExpense = expensesThisMonth.fold<double>(0, (s, e) => s + e.amount);
+
+                    // Recalculate to ensure balances reflect net transactions
+                    WalletService.recalculateAllFromServices();
+                    // wallet.balance already reflects current value from WalletService
+                    final effectiveBalance = wallet.balance;
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TotalBalanceCard(
+                            amount: effectiveBalance,
+                            titleLeft: wallet.name,
+                            subLabel: 'Current Balance',
+                            trailingIcon: wallet.icon,
+                            compact: true,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: StatCard(label: 'Income', amount: totalIncome, color: const Color(0xFF66D4CC), icon: Icons.trending_up)),
+                              const SizedBox(width: 12),
+                              Expanded(child: StatCard(label: 'Expense', amount: totalExpense, color: const Color(0xFFF28080), icon: Icons.trending_down)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTransactionSection(incomes, expenses, transfers),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(String label, double amount, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              Icon(icon, color: Colors.white, size: 20),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount),
-              maxLines: 1,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text('This month', style: TextStyle(fontSize: 12, color: Colors.white)),
-        ],
-      ),
-    );
-  }
+  // Stat card is now a reusable widget (StatCard)
 
-  Widget _buildTransactionSection(List<Income> incomes, List<Expense> expenses) {
+  Widget _buildTransactionSection(List<Income> incomes, List<Expense> expenses, List<Transfer> transfers) {
     final incomeTx = incomes.map(
       (i) => {
         'title': i.title,
@@ -135,7 +130,39 @@ class WalletDetailPage extends StatelessWidget {
       },
     );
 
-    final txWithDate = [...incomeTx, ...expenseTx]
+    // Split transfers: for this wallet, show outgoing (-amount) and incoming (+amount)
+    final transferTx = transfers.expand((t) {
+      final dateStr = DateFormat('EEE, dd MMM', 'en_US').format(t.date);
+      final timeStr = DateFormat('HH:mm').format(t.date);
+      final List<Map<String, dynamic>> rows = [];
+      if (t.fromWalletId == wallet.id) {
+        rows.add({
+          'title': 'Transfer to',
+          'date': dateStr,
+          'time': timeStr,
+          'amount': -t.amount,
+          'icon': Icons.swap_horiz,
+          'color': Colors.blueGrey,
+          'walletId': t.fromWalletId,
+          'walletName': wallet.name,
+        });
+      }
+      if (t.toWalletId == wallet.id) {
+        rows.add({
+          'title': 'Transfer from',
+          'date': dateStr,
+          'time': timeStr,
+          'amount': t.amount,
+          'icon': Icons.swap_horiz,
+          'color': Colors.blueGrey,
+          'walletId': t.toWalletId,
+          'walletName': wallet.name,
+        });
+      }
+      return rows;
+    });
+
+    final txWithDate = [...incomeTx, ...expenseTx, ...transferTx]
         .map((t) => {'data': t, 'dt': parseTransactionDateTime(t)})
         .toList();
 

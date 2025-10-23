@@ -18,7 +18,7 @@ class WelcomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 3),
-              Image.asset('assets/logo/app_icon.png', height: 100),
+              Image.asset('assets/logo/new_app_icon.png', height: 100),
               const SizedBox(height: 24),
               const Text(
                 'Welcome to Moneta',

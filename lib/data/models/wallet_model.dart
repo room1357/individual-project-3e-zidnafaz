@@ -22,4 +22,6 @@ class Wallet {
         color: color ?? this.color,
         icon: icon ?? this.icon,
       );
+
+  String get formattedBalance => 'Rp ${balance.toStringAsFixed(0)}';
 }

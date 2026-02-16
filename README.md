@@ -25,7 +25,7 @@ Create and manage multiple wallets for different purposes (personal, business, s
 ### 💸 Income & Expense Tracking
 Record and categorize all your financial transactions with ease
 
-<img src="assets/screenshots/income_expense.png" width="300" alt="Income & Expense Tracking">
+<img src="assets/screenshots/income_expense.jpg" width="300" alt="Income & Expense Tracking">
 
 ---
 
